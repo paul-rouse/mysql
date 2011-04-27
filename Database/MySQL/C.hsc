@@ -20,6 +20,7 @@ module Database.MySQL.C
     , mysql_ping
     , mysql_autocommit
     , mysql_change_user
+    , mysql_select_db
     -- ** Connection information
     , mysql_thread_id
     , mysql_get_server_info
@@ -337,6 +338,11 @@ foreign import ccall unsafe mysql_change_user
     -> CString                  -- ^ password
     -> CString                  -- ^ database
     -> IO MyBool
+
+foreign import ccall unsafe mysql_select_db
+    :: Ptr MYSQL
+    -> CString
+    -> IO CInt
 
 foreign import ccall safe mysql_get_server_info
     :: Ptr MYSQL -> IO CString

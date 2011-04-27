@@ -17,6 +17,7 @@ module Database.MySQL
     , autocommit
     , ping
     , changeUser
+    , selectDB
     -- ** Connection information
     , threadId
     , serverInfo
@@ -186,6 +187,12 @@ changeUser conn user pass mdb =
      withConn conn $ \ptr ->
       withRTSSignalsBlocked (mysql_change_user ptr cuser cpass cdb) >>=
       check "changeUser" ptr
+
+selectDB :: Connection -> String -> IO ()
+selectDB conn db = 
+  withCString db $ \cdb ->
+    withConn conn $ \ptr ->
+      withRTSSignalsBlocked (mysql_select_db ptr cdb) >>= check "selectDB" ptr
 
 query :: Connection -> ByteString -> IO ()
 query conn q = withConn conn $ \ptr ->
