@@ -19,6 +19,7 @@ module Database.MySQL
     , serverInfo
     , hostInfo
     , protocolInfo
+    , characterSetName
     -- * General information
     , clientInfo
     , clientVersion
@@ -120,6 +121,10 @@ hostInfo conn = withConn conn $ \ptr ->
 protocolInfo :: Connection -> IO Word
 protocolInfo conn = withConn conn $ \ptr ->
                     fromIntegral <$> mysql_get_proto_info ptr
+
+characterSetName :: Connection -> IO String
+characterSetName conn = withConn conn $ \ptr ->
+                        peekCString =<< mysql_character_set_name ptr
 
 clientInfo :: String
 clientInfo = unsafePerformIO $ peekCString mysql_get_client_info
