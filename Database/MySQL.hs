@@ -21,6 +21,7 @@ module Database.MySQL
     , protocolInfo
     , characterSetName
     , sslCipher
+    , serverStatus
     -- * General information
     , clientInfo
     , clientVersion
@@ -133,6 +134,12 @@ sslCipher conn = withConn conn $ \ptr -> do
   if name == nullPtr
     then return Nothing
     else Just <$> peekCString name
+
+serverStatus :: Connection -> IO String
+serverStatus conn = withConn conn $ \ptr -> do
+  st <- withRTSSignalsBlocked $ mysql_stat ptr
+  check "serverStatus" ptr (ptrToIntPtr st)
+  peekCString st
 
 clientInfo :: String
 clientInfo = unsafePerformIO $ peekCString mysql_get_client_info

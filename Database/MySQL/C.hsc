@@ -20,6 +20,7 @@ module Database.MySQL.C
     , mysql_get_proto_info
     , mysql_character_set_name
     , mysql_get_ssl_cipher
+    , mysql_stat
     -- * General information
     , mysql_get_client_info
     , mysql_get_client_version
@@ -139,6 +140,9 @@ foreign import ccall safe mysql_character_set_name
     :: Ptr MYSQL -> IO CString
 
 foreign import ccall safe mysql_get_ssl_cipher
+    :: Ptr MYSQL -> IO CString
+
+foreign import ccall unsafe mysql_stat
     :: Ptr MYSQL -> IO CString
 
 foreign import ccall safe mysql_get_client_info :: CString
