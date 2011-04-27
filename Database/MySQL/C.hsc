@@ -100,17 +100,17 @@ foreign import ccall unsafe mysql_close
 foreign import ccall unsafe mysql_ping
     :: Ptr MYSQL -> IO CInt
 
-foreign import ccall unsafe mysql_thread_id
+foreign import ccall safe mysql_thread_id
     :: Ptr MYSQL -> IO CULong
 
-foreign import ccall unsafe mysql_errno
+foreign import ccall safe mysql_errno
     :: Ptr MYSQL -> IO CInt
 
-foreign import ccall unsafe mysql_error
+foreign import ccall safe mysql_error
     :: Ptr MYSQL -> IO CString
 
-foreign import ccall unsafe mysql_stmt_errno
+foreign import ccall safe mysql_stmt_errno
     :: Ptr MYSQL_STMT -> IO CInt
 
-foreign import ccall unsafe mysql_stmt_error
+foreign import ccall safe mysql_stmt_error
     :: Ptr MYSQL_STMT -> IO CString
