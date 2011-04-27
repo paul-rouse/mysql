@@ -11,7 +11,9 @@ module Database.MySQL
     -- * Connection management
     , connect
     , close
+    , autocommit
     , ping
+    , changeUser
     , threadId
     ) where
 
@@ -99,6 +101,20 @@ ping conn = withConn conn $ \ptr ->
 threadId :: Connection -> IO Word
 threadId conn = fromIntegral <$> withConn conn mysql_thread_id
 
+autocommit :: Connection -> Bool -> IO ()
+autocommit conn onOff = withConn conn $ \ptr ->
+   withRTSSignalsBlocked (mysql_autocommit ptr b) >>= check "autocommit" ptr
+ where b = if onOff then 1 else 0
+
+changeUser :: Connection -> String -> String -> Maybe String -> IO ()
+changeUser conn user pass mdb =
+  withCString user $ \cuser ->
+   withCString pass $ \cpass ->
+    withMaybeString mdb $ \cdb ->
+     withConn conn $ \ptr ->
+      withRTSSignalsBlocked (mysql_change_user ptr cuser cpass cdb) >>=
+      check "changeUser" ptr
+
 withConn :: Connection -> (Ptr MYSQL -> IO a) -> IO a
 withConn conn = withForeignPtr (connFP conn)
 
@@ -106,8 +122,13 @@ withString :: String -> (CString -> IO a) -> IO a
 withString [] act = act nullPtr
 withString xs act = withCString xs act
 
-check :: String -> Ptr MYSQL -> CInt -> IO ()
+withMaybeString :: Maybe String -> (CString -> IO a) -> IO a
+withMaybeString Nothing act = act nullPtr
+withMaybeString (Just xs) act = withCString xs act
+
+check :: Num a => String -> Ptr MYSQL -> a -> IO ()
 check func ptr r = unless (r == 0) $ connectionError func ptr
+{-# INLINE check #-}
 
 connectionError :: String -> Ptr MYSQL -> IO a
 connectionError func ptr = do

@@ -5,12 +5,15 @@ module Database.MySQL.C
     -- * Types
       MYSQL
     , MYSQL_STMT
+    , MyBool
     -- * Connection management
     , mysql_init
     , mysql_real_connect
     , mysql_close
     , mysql_ping
     , mysql_thread_id
+    , mysql_autocommit
+    , mysql_change_user
     -- * Error handling
     , mysql_errno
     , mysql_error
@@ -33,6 +36,7 @@ import Foreign.Storable (Storable(..))
 
 data MYSQL
 data MYSQL_STMT
+type MyBool = CChar
 
 -- | Execute an 'IO' action with signals used by GHC's runtime signals
 -- blocked.  The @mysqlclient@ C library does not correctly restart
@@ -102,6 +106,16 @@ foreign import ccall unsafe mysql_ping
 
 foreign import ccall safe mysql_thread_id
     :: Ptr MYSQL -> IO CULong
+
+foreign import ccall unsafe mysql_autocommit
+    :: Ptr MYSQL -> MyBool -> IO MyBool
+
+foreign import ccall unsafe mysql_change_user
+    :: Ptr MYSQL
+    -> CString                  -- ^ user
+    -> CString                  -- ^ password
+    -> CString                  -- ^ database
+    -> IO MyBool
 
 foreign import ccall safe mysql_errno
     :: Ptr MYSQL -> IO CInt
