@@ -21,6 +21,13 @@ module Database.MySQL.C
     , mysql_character_set_name
     , mysql_get_ssl_cipher
     , mysql_stat
+    -- * Querying
+    , mysql_real_query
+    -- ** Results
+    , mysql_field_count
+    , mysql_affected_rows
+    -- * Escaping
+    , mysql_real_escape_string
     -- * General information
     , mysql_get_client_info
     , mysql_get_client_version
@@ -40,9 +47,10 @@ import Control.Concurrent (rtsSupportsBoundThreads, runInBoundThread)
 import Control.Exception (finally)
 import Foreign.C.String (CString)
 import Foreign.C.Types
-import Foreign.Marshal.Alloc (alloca)
+import Foreign.ForeignPtr (ForeignPtr, mallocForeignPtr, withForeignPtr)
 import Foreign.Ptr (Ptr, nullPtr)
 import Foreign.Storable (Storable(..))
+import System.IO.Unsafe (unsafePerformIO)
 
 data MYSQL
 data MYSQL_STMT
@@ -72,12 +80,19 @@ type MyBool = CChar
 withRTSSignalsBlocked :: IO a -> IO a
 withRTSSignalsBlocked act
     | not rtsSupportsBoundThreads = act
-    | otherwise = runInBoundThread . alloca $ \set -> do
-  sigemptyset set
-  sigaddset set (#const SIGALRM)
-  sigaddset set (#const SIGVTALRM)
+    | otherwise = runInBoundThread . withForeignPtr rtsSignals $ \set -> do
   pthread_sigmask (#const SIG_BLOCK) set nullPtr
   act `finally` pthread_sigmask (#const SIG_UNBLOCK) set nullPtr
+
+rtsSignals :: ForeignPtr SigSet
+rtsSignals = unsafePerformIO $ do
+               fp <- mallocForeignPtr
+               withForeignPtr fp $ \set -> do
+                 sigemptyset set
+                 sigaddset set (#const SIGALRM)
+                 sigaddset set (#const SIGVTALRM)
+               return fp
+{-# NOINLINE rtsSignals #-}
 
 data SigSet
 
@@ -144,6 +159,18 @@ foreign import ccall safe mysql_get_ssl_cipher
 
 foreign import ccall unsafe mysql_stat
     :: Ptr MYSQL -> IO CString
+
+foreign import ccall unsafe mysql_real_query
+    :: Ptr MYSQL -> CString -> CULong -> IO CInt
+
+foreign import ccall safe mysql_field_count
+    :: Ptr MYSQL -> IO CUInt
+
+foreign import ccall safe mysql_affected_rows
+    :: Ptr MYSQL -> IO CULLong
+
+foreign import ccall safe mysql_real_escape_string
+    :: Ptr MYSQL -> CString -> CString -> CULong -> IO CULong
 
 foreign import ccall safe mysql_get_client_info :: CString
 

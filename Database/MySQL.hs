@@ -22,11 +22,22 @@ module Database.MySQL
     , characterSetName
     , sslCipher
     , serverStatus
+    -- * Querying
+    , query
+    -- ** Results
+    , fieldCount
+    , affectedRows
+    -- * Escaping
+    , escape
     -- * General information
     , clientInfo
     , clientVersion
     ) where
 
+import Data.ByteString
+import Data.ByteString.Internal
+import Data.ByteString.Unsafe
+    
 import Control.Applicative
 import Data.Typeable (Typeable)
 import Control.Exception
@@ -162,6 +173,24 @@ changeUser conn user pass mdb =
      withConn conn $ \ptr ->
       withRTSSignalsBlocked (mysql_change_user ptr cuser cpass cdb) >>=
       check "changeUser" ptr
+
+query :: Connection -> ByteString -> IO ()
+query conn q = withConn conn $ \ptr ->
+  unsafeUseAsCStringLen q $ \(p,l) ->
+  mysql_real_query ptr p (fromIntegral l) >>= check "query" ptr
+
+fieldCount :: Connection -> IO Word
+fieldCount conn = withConn conn $ fmap fromIntegral . mysql_field_count
+
+affectedRows :: Connection -> IO Word64
+affectedRows conn = withConn conn $ fmap fromIntegral . mysql_affected_rows
+
+escape :: Connection -> ByteString -> IO ByteString
+escape conn bs = withConn conn $ \ptr ->
+  unsafeUseAsCStringLen bs $ \(p,l) ->
+    createAndTrim (l*2 + 1) $ \to ->
+      fromIntegral <$> mysql_real_escape_string ptr (castPtr to) p
+                                                (fromIntegral l)
 
 withConn :: Connection -> (Ptr MYSQL -> IO a) -> IO a
 withConn conn = withForeignPtr (connFP conn)
