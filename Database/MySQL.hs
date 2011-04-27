@@ -7,6 +7,9 @@ module Database.MySQL
     , Option(..)
     , defaultConnectInfo
     , Connection
+    , Result(resConnection)
+    , Field
+    , Type
     , MySQLError(errFunction, errNumber, errMessage)
     -- * Connection management
     , connect
@@ -24,21 +27,25 @@ module Database.MySQL
     , serverStatus
     -- * Querying
     , query
+    -- ** Escaping
+    , escape
     -- ** Results
     , fieldCount
     , affectedRows
-    -- * Escaping
-    , escape
+    , storeResult
+    -- * Working with results
+    , fetchFields
     -- * General information
     , clientInfo
     , clientVersion
     ) where
 
-import Data.ByteString
+import Data.ByteString.Char8
 import Data.ByteString.Internal
 import Data.ByteString.Unsafe
     
 import Control.Applicative
+import Data.Int
 import Data.Typeable (Typeable)
 import Control.Exception
 import Control.Monad
@@ -50,6 +57,7 @@ import Foreign.C.String
 import Foreign.C.Types
 import Foreign.ForeignPtr hiding (newForeignPtr)
 import Foreign.Concurrent
+import Foreign.Marshal.Array
 import Foreign.Ptr
 
 data ConnectInfo = ConnectInfo {
@@ -73,6 +81,11 @@ instance Exception MySQLError
 data Connection = Connection {
       connFP :: ForeignPtr MYSQL
     , connClose :: Ptr MYSQL -> IO ()
+    }
+
+data Result = Result {
+      resFP :: ForeignPtr MYSQL_RES
+    , resConnection :: Connection
     }
 
 data Option = Option
@@ -179,11 +192,33 @@ query conn q = withConn conn $ \ptr ->
   unsafeUseAsCStringLen q $ \(p,l) ->
   mysql_real_query ptr p (fromIntegral l) >>= check "query" ptr
 
-fieldCount :: Connection -> IO Word
+fieldCount :: Connection -> IO Int
 fieldCount conn = withConn conn $ fmap fromIntegral . mysql_field_count
 
-affectedRows :: Connection -> IO Word64
+affectedRows :: Connection -> IO Int64
 affectedRows conn = withConn conn $ fmap fromIntegral . mysql_affected_rows
+
+storeResult :: Connection -> IO (Maybe Result)
+storeResult conn = withConn conn $ \ptr -> do
+  res <- mysql_store_result ptr
+  if res == nullPtr
+    then do
+      n <- mysql_field_count ptr
+      if n == 0
+        then return Nothing
+        else connectionError "storeResult" ptr
+    else do
+      fp <- newForeignPtr res $ mysql_free_result res
+      return . Just $ Result {
+                   resFP = fp
+                 , resConnection = conn
+                 }
+
+fetchFields :: Result -> IO [Field]
+fetchFields res = withRes res $ \ptr -> do
+  fptr <- withRTSSignalsBlocked $ mysql_fetch_fields ptr
+  n <- fieldCount (resConnection res)
+  peekArray n fptr
 
 escape :: Connection -> ByteString -> IO ByteString
 escape conn bs = withConn conn $ \ptr ->
@@ -194,6 +229,9 @@ escape conn bs = withConn conn $ \ptr ->
 
 withConn :: Connection -> (Ptr MYSQL -> IO a) -> IO a
 withConn conn = withForeignPtr (connFP conn)
+
+withRes :: Result -> (Ptr MYSQL_RES -> IO a) -> IO a
+withRes res = withForeignPtr (resFP res)
 
 withString :: String -> (CString -> IO a) -> IO a
 withString [] act = act nullPtr
