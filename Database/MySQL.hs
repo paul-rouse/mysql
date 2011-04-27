@@ -11,6 +11,7 @@ module Database.MySQL
     -- * Connection management
     , connect
     , close
+    , ping
     ) where
 
 import Data.Typeable (Typeable)
@@ -20,6 +21,7 @@ import Database.MySQL.C
 import Data.IORef
 import Data.Word (Word16)
 import Foreign.C.String
+import Foreign.C.Types
 import Foreign.ForeignPtr hiding (newForeignPtr)
 import Foreign.Concurrent
 import Foreign.Ptr
@@ -35,7 +37,8 @@ data ConnectInfo = ConnectInfo {
     } deriving (Eq, Read, Show, Typeable)
 
 data MySQLError = ConnectionError {
-      errNumber :: Int
+      errFunction :: String
+    , errNumber :: Int
     , errMessage :: String
     } deriving (Eq, Show, Typeable)
 
@@ -43,7 +46,7 @@ instance Exception MySQLError
 
 data Connection = Connection {
       connFP :: ForeignPtr MYSQL
-    , connClose :: Closer
+    , connClose :: Ptr MYSQL -> IO ()
     }
 
 data Option = Option
@@ -72,29 +75,37 @@ connect ConnectInfo{..} = do
               mysql_real_connect ptr0 chost cuser cpass cdb
                                  (fromIntegral connectPort)
   when (ptr == nullPtr) $
-    connectionError ptr0
+    connectionError "connect" ptr0
   fp <- newForeignPtr ptr $ realClose closed ptr
   return Connection {
                connFP = fp
              , connClose = realClose closed
              }
 
-withString :: String -> (CString -> IO a) -> IO a
-withString [] act = act nullPtr
-withString xs act = withCString xs act
-
 close :: Connection -> IO ()
-close Connection{..} = withForeignPtr connFP connClose
+close conn = withConn conn (connClose conn)
 
 realClose :: IORef Bool -> Ptr MYSQL -> IO ()
 realClose closeInfo ptr = do
   wasClosed <- atomicModifyIORef closeInfo $ \prev -> (True, prev)
   unless wasClosed . withRTSSignalsBlocked $ mysql_close ptr
 
-connectionError :: Ptr MYSQL -> IO a
-connectionError ptr = do
+ping :: Connection -> IO ()
+ping conn = withConn conn $ \ptr ->
+            withRTSSignalsBlocked (mysql_ping ptr) >>= check "ping" ptr
+
+withConn :: Connection -> (Ptr MYSQL -> IO a) -> IO a
+withConn conn = withForeignPtr (connFP conn)
+
+withString :: String -> (CString -> IO a) -> IO a
+withString [] act = act nullPtr
+withString xs act = withCString xs act
+
+check :: String -> Ptr MYSQL -> CInt -> IO ()
+check func ptr r = unless (r == 0) $ connectionError func ptr
+
+connectionError :: String -> Ptr MYSQL -> IO a
+connectionError func ptr = do
   errno <- mysql_errno ptr
   msg <- peekCString =<< mysql_error ptr
-  throw $ ConnectionError (fromIntegral errno) msg
-  
-type Closer = Ptr MYSQL -> IO ()
+  throw $ ConnectionError func (fromIntegral errno) msg

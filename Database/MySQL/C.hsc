@@ -9,6 +9,7 @@ module Database.MySQL.C
     , mysql_init
     , mysql_real_connect
     , mysql_close
+    , mysql_ping
     -- * Error handling
     , mysql_errno
     , mysql_error
@@ -94,6 +95,9 @@ foreign import ccall unsafe mysql_real_connect
 
 foreign import ccall unsafe mysql_close
     :: Ptr MYSQL -> IO ()
+
+foreign import ccall unsafe mysql_ping
+    :: Ptr MYSQL -> IO CInt
 
 foreign import ccall unsafe mysql_errno
     :: Ptr MYSQL -> IO CInt
