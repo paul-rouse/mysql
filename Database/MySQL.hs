@@ -18,12 +18,13 @@ module Database.MySQL
     , ping
     , changeUser
     , selectDB
+    , setCharacterSet
     -- ** Connection information
     , threadId
     , serverInfo
     , hostInfo
     , protocolInfo
-    , characterSetName
+    , characterSet
     , sslCipher
     , serverStatus
     -- * Querying
@@ -149,8 +150,14 @@ protocolInfo :: Connection -> IO Word
 protocolInfo conn = withConn conn $ \ptr ->
                     fromIntegral <$> mysql_get_proto_info ptr
 
-characterSetName :: Connection -> IO String
-characterSetName conn = withConn conn $ \ptr ->
+setCharacterSet :: Connection -> String -> IO ()
+setCharacterSet conn cs =
+  withCString cs $ \ccs ->
+    withConn conn $ \ptr ->
+        mysql_set_character_set ptr ccs >>= check "setCharacterSet" ptr
+
+characterSet :: Connection -> IO String
+characterSet conn = withConn conn $ \ptr ->
                         peekCString =<< mysql_character_set_name ptr
 
 sslCipher :: Connection -> IO (Maybe String)

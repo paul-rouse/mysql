@@ -21,6 +21,7 @@ module Database.MySQL.C
     , mysql_autocommit
     , mysql_change_user
     , mysql_select_db
+    , mysql_set_character_set
     -- ** Connection information
     , mysql_thread_id
     , mysql_get_server_info
@@ -355,6 +356,9 @@ foreign import ccall safe mysql_get_proto_info
 
 foreign import ccall safe mysql_character_set_name
     :: Ptr MYSQL -> IO CString
+
+foreign import ccall safe mysql_set_character_set
+    :: Ptr MYSQL -> CString -> IO CInt
 
 foreign import ccall safe mysql_get_ssl_cipher
     :: Ptr MYSQL -> IO CString
