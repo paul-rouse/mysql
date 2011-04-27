@@ -20,6 +20,7 @@ module Database.MySQL
     , hostInfo
     , protocolInfo
     , characterSetName
+    , sslCipher
     -- * General information
     , clientInfo
     , clientVersion
@@ -125,6 +126,13 @@ protocolInfo conn = withConn conn $ \ptr ->
 characterSetName :: Connection -> IO String
 characterSetName conn = withConn conn $ \ptr ->
                         peekCString =<< mysql_character_set_name ptr
+
+sslCipher :: Connection -> IO (Maybe String)
+sslCipher conn = withConn conn $ \ptr -> do
+  name <- mysql_get_ssl_cipher ptr
+  if name == nullPtr
+    then return Nothing
+    else Just <$> peekCString name
 
 clientInfo :: String
 clientInfo = unsafePerformIO $ peekCString mysql_get_client_info
