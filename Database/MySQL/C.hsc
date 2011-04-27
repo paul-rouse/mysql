@@ -11,9 +11,16 @@ module Database.MySQL.C
     , mysql_real_connect
     , mysql_close
     , mysql_ping
-    , mysql_thread_id
     , mysql_autocommit
     , mysql_change_user
+    -- ** Connection information
+    , mysql_thread_id
+    , mysql_get_server_info
+    , mysql_get_host_info
+    , mysql_get_proto_info
+    -- * General information
+    , mysql_get_client_info
+    , mysql_get_client_version
     -- * Error handling
     , mysql_errno
     , mysql_error
@@ -116,6 +123,19 @@ foreign import ccall unsafe mysql_change_user
     -> CString                  -- ^ password
     -> CString                  -- ^ database
     -> IO MyBool
+
+foreign import ccall safe mysql_get_server_info
+    :: Ptr MYSQL -> IO CString
+
+foreign import ccall safe mysql_get_host_info
+    :: Ptr MYSQL -> IO CString
+
+foreign import ccall safe mysql_get_proto_info
+    :: Ptr MYSQL -> IO CUInt
+
+foreign import ccall safe mysql_get_client_info :: CString
+
+foreign import ccall safe mysql_get_client_version :: CULong
 
 foreign import ccall safe mysql_errno
     :: Ptr MYSQL -> IO CInt

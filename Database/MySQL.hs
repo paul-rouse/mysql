@@ -14,7 +14,14 @@ module Database.MySQL
     , autocommit
     , ping
     , changeUser
+    -- ** Connection information
     , threadId
+    , serverInfo
+    , hostInfo
+    , protocolInfo
+    -- * General information
+    , clientInfo
+    , clientVersion
     ) where
 
 import Control.Applicative
@@ -22,6 +29,7 @@ import Data.Typeable (Typeable)
 import Control.Exception
 import Control.Monad
 import Database.MySQL.C
+import System.IO.Unsafe
 import Data.IORef
 import Data.Word
 import Foreign.C.String
@@ -100,6 +108,26 @@ ping conn = withConn conn $ \ptr ->
 
 threadId :: Connection -> IO Word
 threadId conn = fromIntegral <$> withConn conn mysql_thread_id
+
+serverInfo :: Connection -> IO String
+serverInfo conn = withConn conn $ \ptr ->
+                  peekCString =<< mysql_get_server_info ptr
+
+hostInfo :: Connection -> IO String
+hostInfo conn = withConn conn $ \ptr ->
+                peekCString =<< mysql_get_host_info ptr
+
+protocolInfo :: Connection -> IO Word
+protocolInfo conn = withConn conn $ \ptr ->
+                    fromIntegral <$> mysql_get_proto_info ptr
+
+clientInfo :: String
+clientInfo = unsafePerformIO $ peekCString mysql_get_client_info
+{-# NOINLINE clientInfo #-}
+
+clientVersion :: Word
+clientVersion = fromIntegral mysql_get_client_version
+{-# NOINLINE clientVersion #-}
 
 autocommit :: Connection -> Bool -> IO ()
 autocommit conn onOff = withConn conn $ \ptr ->
