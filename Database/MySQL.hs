@@ -7,19 +7,21 @@ module Database.MySQL
     , Option(..)
     , defaultConnectInfo
     , Connection
-    , MySQLError(errNumber, errMessage)
+    , MySQLError(errFunction, errNumber, errMessage)
     -- * Connection management
     , connect
     , close
     , ping
+    , threadId
     ) where
 
+import Control.Applicative
 import Data.Typeable (Typeable)
 import Control.Exception
 import Control.Monad
 import Database.MySQL.C
 import Data.IORef
-import Data.Word (Word16)
+import Data.Word
 import Foreign.C.String
 import Foreign.C.Types
 import Foreign.ForeignPtr hiding (newForeignPtr)
@@ -93,6 +95,9 @@ realClose closeInfo ptr = do
 ping :: Connection -> IO ()
 ping conn = withConn conn $ \ptr ->
             withRTSSignalsBlocked (mysql_ping ptr) >>= check "ping" ptr
+
+threadId :: Connection -> IO Word
+threadId conn = fromIntegral <$> withConn conn mysql_thread_id
 
 withConn :: Connection -> (Ptr MYSQL -> IO a) -> IO a
 withConn conn = withForeignPtr (connFP conn)

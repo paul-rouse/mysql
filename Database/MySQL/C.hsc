@@ -10,6 +10,7 @@ module Database.MySQL.C
     , mysql_real_connect
     , mysql_close
     , mysql_ping
+    , mysql_thread_id
     -- * Error handling
     , mysql_errno
     , mysql_error
@@ -25,7 +26,7 @@ module Database.MySQL.C
 import Control.Concurrent (rtsSupportsBoundThreads, runInBoundThread)
 import Control.Exception (finally)
 import Foreign.C.String (CString)
-import Foreign.C.Types (CInt)
+import Foreign.C.Types
 import Foreign.Marshal.Alloc (alloca)
 import Foreign.Ptr (Ptr, nullPtr)
 import Foreign.Storable (Storable(..))
@@ -98,6 +99,9 @@ foreign import ccall unsafe mysql_close
 
 foreign import ccall unsafe mysql_ping
     :: Ptr MYSQL -> IO CInt
+
+foreign import ccall unsafe mysql_thread_id
+    :: Ptr MYSQL -> IO CULong
 
 foreign import ccall unsafe mysql_errno
     :: Ptr MYSQL -> IO CInt
