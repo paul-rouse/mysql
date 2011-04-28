@@ -32,6 +32,7 @@ module Database.MySQL.Base.C
     , mysql_stat
     -- * Querying
     , mysql_real_query
+    , mysql_insert_id
     -- ** Escaping
     , mysql_real_escape_string
     -- ** Results
@@ -259,6 +260,9 @@ foreign import ccall unsafe mysql_stat
 
 foreign import ccall unsafe mysql_real_query
     :: Ptr MYSQL -> CString -> CULong -> IO CInt
+
+foreign import ccall safe mysql_insert_id
+    :: Ptr MYSQL -> IO CULLong
 
 foreign import ccall safe mysql_field_count
     :: Ptr MYSQL -> IO CUInt

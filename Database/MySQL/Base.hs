@@ -49,6 +49,7 @@ module Database.MySQL.Base
     , serverStatus
     -- * Querying
     , query
+    , insertID
     -- ** Escaping
     , escape
     -- ** Results
@@ -84,7 +85,7 @@ import Data.IORef (IORef, atomicModifyIORef, newIORef, readIORef, writeIORef)
 import Data.Int (Int64)
 import Data.List (foldl')
 import Data.Typeable (Typeable)
-import Data.Word (Word, Word16)
+import Data.Word (Word, Word16, Word64)
 import Database.MySQL.Base.C
 import Database.MySQL.Base.Types
 import Foreign.C.String (CString, peekCString, withCString)
@@ -359,6 +360,9 @@ query :: Connection -> ByteString -> IO ()
 query conn q = withConn conn $ \ptr ->
   unsafeUseAsCStringLen q $ \(p,l) ->
   mysql_real_query ptr p (fromIntegral l) >>= check "query" conn
+
+insertID :: Connection -> IO Word64
+insertID conn = fromIntegral <$> (withConn conn $ mysql_insert_id)
 
 -- | Return the number of fields (columns) in a result.
 --
