@@ -29,10 +29,13 @@ module Database.MySQL.C
     , mysql_store_result
     , mysql_use_result
     , mysql_fetch_lengths
+    , mysql_fetch_lengths_nonblock
     , mysql_fetch_row
+    , mysql_fetch_row_nonblock
     -- * Working with results
     , mysql_free_result
     , mysql_fetch_fields
+    , mysql_fetch_fields_nonblock
     -- ** Multiple results
     , mysql_next_result
     -- * General information
@@ -191,13 +194,22 @@ foreign import ccall unsafe mysql_free_result
 foreign import ccall unsafe mysql_fetch_fields
     :: Ptr MYSQL_RES -> IO (Ptr Field)
 
+foreign import ccall safe "mysql.h mysql_fetch_fields" mysql_fetch_fields_nonblock
+    :: Ptr MYSQL_RES -> IO (Ptr Field)
+
 foreign import ccall unsafe mysql_next_result
     :: Ptr MYSQL -> IO CInt
 
 foreign import ccall unsafe mysql_fetch_row
     :: Ptr MYSQL_RES -> IO MYSQL_ROW
 
+foreign import ccall safe "mysql.h mysql_fetch_row" mysql_fetch_row_nonblock
+    :: Ptr MYSQL_RES -> IO MYSQL_ROW
+
 foreign import ccall unsafe mysql_fetch_lengths
+    :: Ptr MYSQL_RES -> IO (Ptr CULong)
+
+foreign import ccall safe "mysql.h mysql_fetch_lengths" mysql_fetch_lengths_nonblock
     :: Ptr MYSQL_RES -> IO (Ptr CULong)
 
 foreign import ccall safe mysql_real_escape_string
