@@ -36,8 +36,11 @@ module Database.MySQL
     , affectedRows
     -- * Working with results
     , storeResult
+    , useResult
     , fetchRow
     , fetchFields
+    -- ** Multiple results
+    , nextResult
     -- * General information
     , clientInfo
     , clientVersion
@@ -46,6 +49,7 @@ module Database.MySQL
 import Data.ByteString.Char8 (ByteString)
 import Data.ByteString.Internal
 import Data.ByteString.Unsafe
+import Database.MySQL.Types
     
 import Control.Applicative
 import Data.Int
@@ -212,13 +216,20 @@ affectedRows :: Connection -> IO Int64
 affectedRows conn = withConn conn $ fmap fromIntegral . mysql_affected_rows
 
 storeResult :: Connection -> IO (Maybe Result)
-storeResult conn = withConn conn $ \ptr -> do
-  res <- withRTSSignalsBlocked $ mysql_store_result ptr
+storeResult = frobResult "storeResult" mysql_store_result
+
+useResult :: Connection -> IO (Maybe Result)
+useResult = frobResult "useResult" mysql_use_result
+
+frobResult :: String -> (Ptr MYSQL -> IO (Ptr MYSQL_RES))
+           -> Connection -> IO (Maybe Result)
+frobResult func frob conn = withConn conn $ \ptr -> do
+  res <- withRTSSignalsBlocked $ frob ptr
   fields <- mysql_field_count ptr
   if res == nullPtr
     then if fields == 0
          then return Nothing
-         else connectionError "storeResult" conn
+         else connectionError func conn
     else do
       fp <- newForeignPtr res $ mysql_free_result res
       return . Just $ Result {
@@ -231,7 +242,7 @@ fetchRow :: Result -> IO [Maybe ByteString]
 fetchRow res@Result{..}
     | resFields == 0 = return []
     | otherwise      = withRes res $ \ptr -> do
-  rowPtr <- mysql_fetch_row ptr
+  rowPtr <- withRTSSignalsBlocked $ mysql_fetch_row ptr
   if rowPtr == nullPtr
     then return []
     else do
@@ -248,6 +259,14 @@ fetchFields res = withRes res $ \ptr -> do
   fptr <- withRTSSignalsBlocked $ mysql_fetch_fields ptr
   n <- fieldCount (resConnection res)
   peekArray n fptr
+
+nextResult :: Connection -> IO Bool
+nextResult conn = withConn conn $ \ptr -> do
+  i <- withRTSSignalsBlocked $ mysql_next_result ptr
+  case i of
+    0  -> return True
+    -1 -> return False
+    _  -> connectionError "nextResult" conn
 
 escape :: Connection -> ByteString -> IO ByteString
 escape conn bs = withConn conn $ \ptr ->

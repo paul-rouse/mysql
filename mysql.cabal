@@ -25,6 +25,7 @@ library
   exposed-modules:
     Database.MySQL
     Database.MySQL.C
+    Database.MySQL.Types
 
   build-depends:
     base       < 5,
