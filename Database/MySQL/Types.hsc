@@ -5,6 +5,9 @@ module Database.MySQL.Types
     -- * Types
     -- * High-level types
       Type(..)
+    , Seconds
+    , Protocol(..)
+    , Option(..)
     , Field(..)
     , FieldFlag
     , FieldFlags
@@ -208,3 +211,34 @@ instance Storable Field where
     sizeOf _    = #{size MYSQL_FIELD}
     alignment _ = alignment (undefined :: Ptr CChar)
     peek = peekField
+
+type Seconds = Word
+
+data Protocol = TCP
+              | Socket
+              | Pipe
+              | Memory
+                deriving (Eq, Read, Show, Enum, Typeable)
+
+data Option = ConnectTimeout Seconds
+            | Compress
+            | NamedPipe
+            | InitCommand ByteString
+            | ReadDefaultFile FilePath
+            | ReadDefaultGroup ByteString
+            | CharsetDir FilePath
+            | CharsetName String
+            | LocalInFile Bool
+            | Protocol Protocol
+            | SharedMemoryBaseName ByteString
+            | ReadTimeout Seconds
+            | WriteTimeout Seconds
+            | UseRemoteConnection
+            | UseEmbeddedConnection
+            | GuessConnection
+            | ClientIP ByteString
+            | SecureAuth Bool
+            | ReportDataTruncation Bool
+            | Reconnect Bool
+            | SSLVerifyServerCert Bool
+              deriving (Eq, Read, Show, Typeable)

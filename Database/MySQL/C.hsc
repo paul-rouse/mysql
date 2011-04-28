@@ -4,6 +4,7 @@ module Database.MySQL.C
     (
     -- * Connection management
       mysql_init
+    , mysql_options
     , mysql_ssl_set
     , mysql_real_connect
     , mysql_close
@@ -55,12 +56,14 @@ module Database.MySQL.C
 import Database.MySQL.Types
 import Control.Concurrent (rtsSupportsBoundThreads, runInBoundThread)
 import Control.Exception (finally)
-import Foreign.C.String (CString)
 import Foreign.C.Types
 import Foreign.ForeignPtr (ForeignPtr, mallocForeignPtr, withForeignPtr)
 import Foreign.Ptr (Ptr, nullPtr)
 import System.IO.Unsafe (unsafePerformIO)
 import Foreign.Storable
+import Foreign.Marshal.Utils
+import Data.ByteString.Unsafe
+import Foreign.C.String
 
 -- | Execute an 'IO' action with signals used by GHC's runtime signals
 -- blocked.  The @mysqlclient@ C library does not correctly restart
@@ -118,6 +121,59 @@ foreign import ccall unsafe "signal.h pthread_sigmask" pthread_sigmask
 foreign import ccall safe mysql_init
     :: Ptr MYSQL                -- ^ should usually be 'nullPtr'
     -> IO (Ptr MYSQL)
+
+mysql_options :: Ptr MYSQL -> Option -> IO CInt
+mysql_options ptr opt =
+    case opt of
+      ConnectTimeout secs ->
+        withIntegral secs $ go (#const MYSQL_OPT_CONNECT_TIMEOUT)
+      Compress ->
+        go (#const MYSQL_OPT_COMPRESS) nullPtr
+      NamedPipe ->
+        go (#const MYSQL_OPT_NAMED_PIPE) nullPtr
+      InitCommand cmd ->
+        unsafeUseAsCString cmd $ go (#const MYSQL_INIT_COMMAND)
+      ReadDefaultFile path ->
+        withCString path $ go (#const MYSQL_READ_DEFAULT_FILE)
+      ReadDefaultGroup group ->
+        unsafeUseAsCString group $ go (#const MYSQL_READ_DEFAULT_GROUP)
+      CharsetDir path ->
+        withCString path $ go (#const MYSQL_SET_CHARSET_DIR)
+      CharsetName cs ->
+        withCString cs $ go (#const MYSQL_SET_CHARSET_NAME)
+      LocalInFile b ->
+        withBool b $ go (#const MYSQL_OPT_LOCAL_INFILE)
+      Protocol proto ->
+        withIntegral (fromEnum proto) $ go (#const MYSQL_OPT_PROTOCOL)
+      SharedMemoryBaseName name ->
+        unsafeUseAsCString name $ go (#const MYSQL_SHARED_MEMORY_BASE_NAME)
+      ReadTimeout secs ->
+        withIntegral secs $ go (#const MYSQL_OPT_READ_TIMEOUT)
+      WriteTimeout secs ->
+        withIntegral secs $ go (#const MYSQL_OPT_WRITE_TIMEOUT)
+      UseRemoteConnection ->
+        go (#const MYSQL_OPT_USE_REMOTE_CONNECTION) nullPtr
+      UseEmbeddedConnection ->
+        go (#const MYSQL_OPT_USE_EMBEDDED_CONNECTION) nullPtr
+      GuessConnection ->
+        go (#const MYSQL_OPT_GUESS_CONNECTION) nullPtr
+      ClientIP ip ->
+        unsafeUseAsCString ip $ go (#const MYSQL_SET_CLIENT_IP)
+      SecureAuth b ->
+        withBool b $ go (#const MYSQL_SECURE_AUTH)
+      ReportDataTruncation b ->
+        withBool b $ go (#const MYSQL_REPORT_DATA_TRUNCATION)
+      Reconnect b ->
+        withBool b $ go (#const MYSQL_OPT_RECONNECT)
+      SSLVerifyServerCert b ->
+        withBool b $ go (#const MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+  where
+    go = mysql_options_ ptr
+    withBool b = with (if b then 1 else 0 :: CUInt)
+    withIntegral i = with (fromIntegral i :: CUInt)
+
+foreign import ccall safe "mysql.h mysql_options" mysql_options_
+    :: Ptr MYSQL -> CInt -> Ptr a -> IO CInt
 
 foreign import ccall unsafe mysql_real_connect
     :: Ptr MYSQL -- ^ Context (from 'mysql_init').

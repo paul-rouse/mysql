@@ -7,13 +7,15 @@ module Database.MySQL
     -- * Types
       ConnectInfo(..)
     , SSLInfo(..)
+    , Seconds
+    , Protocol(..)
     , Option(..)
     , defaultConnectInfo
     , defaultSSLInfo
     , Connection
     , Result
     , Field
-    , Type
+    , Type(..)
     , MySQLError(errFunction, errNumber, errMessage)
     -- * Connection management
     , connect
@@ -157,9 +159,6 @@ data Result = Result {
     , resFetchLengths :: Ptr MYSQL_RES -> IO (Ptr CULong)
     } | EmptyResult
 
-data Option = Option
-            deriving (Eq, Read, Show, Typeable)
-
 defaultConnectInfo :: ConnectInfo
 defaultConnectInfo = ConnectInfo {
                        connectHost = "localhost"
@@ -194,6 +193,9 @@ connect ConnectInfo{..} = do
                             withString sslCiphers $ \ccipher ->
                              mysql_ssl_set ptr0 ckey ccert cca ccapath ccipher
                              >> return ()
+  forM_ connectOptions $ \opt -> do
+    r <- mysql_options ptr0 opt
+    unless (r == 0) $ connectionError_ "connect" ptr0
   ptr <- withString connectHost $ \chost ->
           withString connectUser $ \cuser ->
            withString connectPassword $ \cpass ->
