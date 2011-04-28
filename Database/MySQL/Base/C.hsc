@@ -59,17 +59,17 @@ module Database.MySQL.Base.C
 #include "mysql.h"
 #include <signal.h>
 
-import Database.MySQL.Base.Types
 import Control.Concurrent (rtsSupportsBoundThreads, runInBoundThread)
 import Control.Exception (finally)
-import Foreign.C.Types
+import Data.ByteString.Unsafe (unsafeUseAsCString)
+import Database.MySQL.Base.Types
+import Foreign.C.String (CString, withCString)
+import Foreign.C.Types (CInt, CUInt, CULLong, CULong)
 import Foreign.ForeignPtr (ForeignPtr, mallocForeignPtr, withForeignPtr)
+import Foreign.Marshal.Utils (with)
 import Foreign.Ptr (Ptr, nullPtr)
+import Foreign.Storable (Storable(..))
 import System.IO.Unsafe (unsafePerformIO)
-import Foreign.Storable
-import Foreign.Marshal.Utils
-import Data.ByteString.Unsafe
-import Foreign.C.String
 
 -- | Execute an 'IO' action with signals used by GHC's runtime signals
 -- blocked.  The @mysqlclient@ C library does not correctly restart

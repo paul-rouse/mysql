@@ -61,27 +61,27 @@ module Database.MySQL.Base
     , clientVersion
     ) where
 
+import Control.Applicative ((<$>), (<*>))
+import Control.Exception (Exception, throw)
+import Control.Monad (forM_, unless, when)
 import Data.ByteString.Char8 ()
-import Data.ByteString.Internal
-import Data.ByteString.Unsafe
-import Database.MySQL.Base.Types
-import System.Mem.Weak
-import Data.List    
-import Control.Applicative
-import Data.Int
+import Data.ByteString.Internal (ByteString, create, createAndTrim, memcpy)
+import Data.ByteString.Unsafe (unsafeUseAsCStringLen)
+import Data.IORef (IORef, atomicModifyIORef, newIORef, readIORef, writeIORef)
+import Data.Int (Int64)
+import Data.List (foldl')
 import Data.Typeable (Typeable)
-import Control.Exception
-import Control.Monad
+import Data.Word (Word, Word16)
 import Database.MySQL.Base.C
-import System.IO.Unsafe
-import Data.IORef
-import Data.Word
-import Foreign.C.String
-import Foreign.C.Types
+import Database.MySQL.Base.Types
+import Foreign.C.String (CString, peekCString, withCString)
+import Foreign.C.Types (CULong)
+import Foreign.Concurrent (newForeignPtr)
 import Foreign.ForeignPtr hiding (newForeignPtr)
-import Foreign.Concurrent
-import Foreign.Marshal.Array
-import Foreign.Ptr
+import Foreign.Marshal.Array (peekArray)
+import Foreign.Ptr (Ptr, castPtr, nullPtr)
+import System.IO.Unsafe (unsafePerformIO)
+import System.Mem.Weak (Weak, deRefWeak, mkWeakPtr)
 
 -- $mgmt
 --

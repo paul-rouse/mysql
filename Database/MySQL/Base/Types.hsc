@@ -36,19 +36,19 @@ module Database.MySQL.Base.Types
 
 #include "mysql.h"
 
-import Data.Monoid
-import Data.Bits
-import Data.List
-import Control.Applicative
-import Data.Maybe
-import qualified Data.IntMap as IntMap
-import Foreign.C.Types
-import Foreign.Ptr (Ptr)
-import Foreign.Storable
-import Data.Typeable (Typeable)
+import Control.Applicative ((<$>), (<*>), pure)
+import Data.Bits ((.|.), (.&.))
 import Data.ByteString hiding (intercalate)
-import Data.ByteString.Internal
-import Data.Word
+import Data.ByteString.Internal (create, memcpy)
+import Data.List (intercalate)
+import Data.Maybe (catMaybes)
+import Data.Monoid (Monoid(..))
+import Data.Typeable (Typeable)
+import Data.Word (Word, Word8)
+import Foreign.C.Types (CChar, CInt, CUInt, CULong)
+import Foreign.Ptr (Ptr)
+import Foreign.Storable (Storable(..), peekByteOff)
+import qualified Data.IntMap as IntMap
 
 data MYSQL
 data MYSQL_RES
