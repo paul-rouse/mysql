@@ -23,9 +23,9 @@ flag developer
 
 library
   exposed-modules:
-    Database.MySQL
-    Database.MySQL.C
-    Database.MySQL.Types
+    Database.MySQL.Base
+    Database.MySQL.Base.C
+    Database.MySQL.Base.Types
 
   build-depends:
     base       < 5,

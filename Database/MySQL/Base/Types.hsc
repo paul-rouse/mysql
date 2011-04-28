@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable, EmptyDataDecls, ForeignFunctionInterface #-}
 
-module Database.MySQL.Types
+module Database.MySQL.Base.Types
     (
     -- * Types
     -- * High-level types

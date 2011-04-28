@@ -1,6 +1,6 @@
 {-# LANGUAGE EmptyDataDecls, ForeignFunctionInterface #-}
 
-module Database.MySQL.C
+module Database.MySQL.Base.C
     (
     -- * Connection management
       mysql_init
@@ -59,7 +59,7 @@ module Database.MySQL.C
 #include "mysql.h"
 #include <signal.h>
 
-import Database.MySQL.Types
+import Database.MySQL.Base.Types
 import Control.Concurrent (rtsSupportsBoundThreads, runInBoundThread)
 import Control.Exception (finally)
 import Foreign.C.Types

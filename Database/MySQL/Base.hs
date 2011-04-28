@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveDataTypeable, ForeignFunctionInterface, RecordWildCards #-}
 
-module Database.MySQL
+module Database.MySQL.Base
     (
     -- * Resource management
     -- $mgmt
@@ -64,7 +64,7 @@ module Database.MySQL
 import Data.ByteString.Char8 ()
 import Data.ByteString.Internal
 import Data.ByteString.Unsafe
-import Database.MySQL.Types
+import Database.MySQL.Base.Types
 import System.Mem.Weak
 import Data.List    
 import Control.Applicative
@@ -72,7 +72,7 @@ import Data.Int
 import Data.Typeable (Typeable)
 import Control.Exception
 import Control.Monad
-import Database.MySQL.C
+import Database.MySQL.Base.C
 import System.IO.Unsafe
 import Data.IORef
 import Data.Word
