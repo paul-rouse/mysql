@@ -128,12 +128,27 @@ import System.Mem.Weak (Weak, deRefWeak, mkWeakPtr)
 --
 -- Instead, we allow 'Result' values to stay alive for arbitrarily
 -- long times, while preserving the right to mark them as
--- invalid. Since all functions over @Result@ values are in the 'IO'
--- monad, we don't risk disrupting pure code by introducing this
--- mutability. Code that tries to access a @Result@ that fails
--- 'isResultValid' will be thrown a 'MySQLError'. This should /not/
--- occur in normal code, so there should be no need to test a @Result@
--- for validity.
+-- invalid. When a @Result@ is marked invalid, its associated
+-- @MYSQL_RES@ is freed, and can no longer be used.
+--
+-- Since all functions over @Result@ values are in the 'IO' monad, we
+-- don't risk disrupting pure code by introducing this notion of
+-- invalidity. If code tries to use an invalid @Result@, a
+-- 'MySQLError' will be thrown. This should /not/ occur in normal
+-- code, so there should be no need to use 'isResultValid' to test a
+-- @Result@ for validity.
+--
+-- Each of the following functions will invalidate a 'Result':
+--
+-- * 'close'
+--
+-- * 'freeResult'
+--
+-- * 'nextResult'
+--
+-- * 'storeResult'
+--
+-- * 'useResult'
 --
 -- A 'Result' must be able to keep a 'Connection' alive so that a
 -- streaming @Result@ constructed by 'useResult' can continue to pull
@@ -189,6 +204,14 @@ data Result = Result {
     , resFetchLengths :: Ptr MYSQL_RES -> IO (Ptr CULong)
     } | EmptyResult
 
+-- | A row cursor, used by 'rowSeek' and 'rowTell'.
+newtype Row = Row MYSQL_ROW_OFFSET
+
+-- | Default information for setting up a connection.
+--
+-- Use as in the following example:
+--
+-- > connect defaultConnectInfo { connectHost = "db.example.com" }
 defaultConnectInfo :: ConnectInfo
 defaultConnectInfo = ConnectInfo {
                        connectHost = "localhost"
@@ -201,6 +224,7 @@ defaultConnectInfo = ConnectInfo {
                      , connectSSL = Nothing
                      }
 
+-- | Default (empty) information for setting up an SSL connection.
 defaultSSLInfo :: SSLInfo
 defaultSSLInfo = SSLInfo {
                    sslKey = ""
@@ -258,6 +282,8 @@ cleanupConnResult res = do
     Nothing -> return ()
     Just w -> maybe (return ()) freeResult =<< deRefWeak w
 
+-- | Close a connection, and mark any outstanding 'Result' as
+-- invalid.
 close :: Connection -> IO ()
 close = connClose
 {-# INLINE close #-}
@@ -334,6 +360,15 @@ query conn q = withConn conn $ \ptr ->
   unsafeUseAsCStringLen q $ \(p,l) ->
   mysql_real_query ptr p (fromIntegral l) >>= check "query" conn
 
+-- | Return the number of fields (columns) in a result.
+--
+-- * If 'Left' 'Connection', returns the number of columns for the most
+--   recent query on the connection.
+--
+-- * For 'Right' 'Result', returns the number of columns in each row
+--   of this result.
+--
+-- The number of columns may legitimately be zero.
 fieldCount :: Either Connection Result -> IO Int
 fieldCount (Right EmptyResult) = return 0
 fieldCount (Right res)         = return (resFields res)
@@ -343,12 +378,18 @@ fieldCount (Left conn)         =
 affectedRows :: Connection -> IO Int64
 affectedRows conn = withConn conn $ fmap fromIntegral . mysql_affected_rows
 
+-- | Retrieve a complete result.
+--
+-- Any previous outstanding 'Result' is first marked as invalid.
 storeResult :: Connection -> IO Result
 storeResult = frobResult "storeResult" mysql_store_result
               mysql_fetch_fields_nonblock
               mysql_fetch_row_nonblock
               mysql_fetch_lengths_nonblock
 
+-- | Initiate a row-by-row retrieval of a result.
+--
+-- Any previous outstanding 'Result' is first marked as invalid.
 useResult :: Connection -> IO Result
 useResult = frobResult "useResult" mysql_use_result
             (withRTSSignalsBlocked . mysql_fetch_fields)
@@ -386,10 +427,14 @@ frobResult func frob fetchFieldsFunc fetchRowFunc fetchLengthsFunc conn =
         writeIORef (connResult conn) (Just weak)
         return ret
 
+-- | Immediately free the @MYSQL_RES@ value associated with this
+-- 'Result', and mark the @Result@ as invalid.
 freeResult :: Result -> IO ()
 freeResult Result{..}      = withForeignPtr resFP $ freeResult_ resValid
 freeResult EmptyResult{..} = return ()
 
+-- | Check whether a 'Result' is still valid, i.e. backed by a live
+-- @MYSQL_RES@ value.
 isResultValid :: Result -> IO Bool
 isResultValid Result{..}  = readIORef resValid
 isResultValid EmptyResult = return False
@@ -419,8 +464,6 @@ fetchFields res@Result{..} = withRes "fetchFields" res $ \ptr -> do
   peekArray resFields =<< resFetchFields ptr
 fetchFields EmptyResult{..} = return []
 
-newtype Row = Row MYSQL_ROW_OFFSET
-
 dataSeek :: Result -> Int64 -> IO ()
 dataSeek res row = withRes "dataSeek" res $ \ptr ->
   mysql_data_seek ptr (fromIntegral row)
@@ -433,8 +476,13 @@ rowSeek :: Result -> Row -> IO Row
 rowSeek res (Row row) = withRes "rowSeek" res $ \ptr ->
   Row <$> mysql_row_seek ptr row
 
+-- | Read the next statement result. Returns 'True' if another result
+-- is available, 'False' otherwise.
+--
+-- This function marks the current 'Result' as invalid, if one exists.
 nextResult :: Connection -> IO Bool
 nextResult conn = withConn conn $ \ptr -> do
+  cleanupConnResult (connResult conn)
   i <- withRTSSignalsBlocked $ mysql_next_result ptr
   case i of
     0  -> return True
