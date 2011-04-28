@@ -6,8 +6,10 @@ module Database.MySQL
     -- $mgmt
     -- * Types
       ConnectInfo(..)
+    , SSLInfo(..)
     , Option(..)
     , defaultConnectInfo
+    , defaultSSLInfo
     , Connection
     , Result
     , Field
@@ -116,6 +118,15 @@ data ConnectInfo = ConnectInfo {
     , connectDatabase :: String
     , connectOptions :: [Option]
     , connectPath :: FilePath
+    , connectSSL :: Maybe SSLInfo
+    } deriving (Eq, Read, Show, Typeable)
+
+data SSLInfo = SSLInfo {
+      sslKey :: FilePath
+    , sslCert :: FilePath
+    , sslCA :: FilePath
+    , sslCAPath :: FilePath
+    , sslCiphers :: String -- ^ Comma-separated list of cipher names.
     } deriving (Eq, Read, Show, Typeable)
 
 data MySQLError = ConnectionError {
@@ -158,12 +169,31 @@ defaultConnectInfo = ConnectInfo {
                      , connectDatabase = "test"
                      , connectOptions = []
                      , connectPath = ""
+                     , connectSSL = Nothing
                      }
+
+defaultSSLInfo :: SSLInfo
+defaultSSLInfo = SSLInfo {
+                   sslKey = ""
+                 , sslCert = ""
+                 , sslCA = ""
+                 , sslCAPath = ""
+                 , sslCiphers = ""
+                 }
 
 connect :: ConnectInfo -> IO Connection
 connect ConnectInfo{..} = do
   closed <- newIORef False
   ptr0 <- mysql_init nullPtr
+  case connectSSL of
+    Nothing -> return ()
+    Just SSLInfo{..} -> withString sslKey $ \ckey ->
+                         withString sslCert $ \ccert ->
+                          withString sslCA $ \cca ->
+                           withString sslCAPath $ \ccapath ->
+                            withString sslCiphers $ \ccipher ->
+                             mysql_ssl_set ptr0 ckey ccert cca ccapath ccipher
+                             >> return ()
   ptr <- withString connectHost $ \chost ->
           withString connectUser $ \cuser ->
            withString connectPassword $ \cpass ->

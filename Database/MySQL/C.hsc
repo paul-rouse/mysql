@@ -4,6 +4,7 @@ module Database.MySQL.C
     (
     -- * Connection management
       mysql_init
+    , mysql_ssl_set
     , mysql_real_connect
     , mysql_close
     , mysql_ping
@@ -119,14 +120,23 @@ foreign import ccall safe mysql_init
     -> IO (Ptr MYSQL)
 
 foreign import ccall unsafe mysql_real_connect
-    :: Ptr MYSQL -- ^ context (from 'mysql_init')
-    -> CString   -- ^ hostname
-    -> CString   -- ^ username
-    -> CString   -- ^ password
-    -> CString   -- ^ database
-    -> CInt      -- ^ port
-    -> CString   -- ^ unix socket
+    :: Ptr MYSQL -- ^ Context (from 'mysql_init').
+    -> CString   -- ^ Host name.
+    -> CString   -- ^ User name.
+    -> CString   -- ^ Password.
+    -> CString   -- ^ Database.
+    -> CInt      -- ^ Port.
+    -> CString   -- ^ Unix socket.
     -> IO (Ptr MYSQL)
+
+foreign import ccall safe mysql_ssl_set
+    :: Ptr MYSQL
+    -> CString                  -- ^ Key.
+    -> CString                  -- ^ Cert.
+    -> CString                  -- ^ CA.
+    -> CString                  -- ^ CA path.
+    -> CString                  -- ^ Ciphers.
+    -> IO MyBool
 
 foreign import ccall unsafe mysql_close
     :: Ptr MYSQL -> IO ()
