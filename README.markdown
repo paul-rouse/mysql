@@ -8,6 +8,15 @@ This library deliberately avoids the question of providing a "good"
 API. Its purpose is to serve as a base on which higher-level libraries
 can be build.
 
+# Licensing
+
+This library is BSD-licensed under the terms of the
+[MySQL FOSS License Exception](http://www.mysql.com/about/legal/licensing/foss-exception/).
+
+Since this library links against the GPL-licensed `mysqlclient`
+library, a non-open-source application that uses it *may* be subject
+to the terms of the GPL.
+
 # To do
 
 * Add support for prepared statements. This API is huge and of dubious

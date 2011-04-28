@@ -1,5 +1,16 @@
 {-# LANGUAGE DeriveDataTypeable, EmptyDataDecls, ForeignFunctionInterface #-}
 
+-- |
+-- Module:      Database.MySQL.Base.C
+-- Copyright:   (c) 2011 MailRank, Inc.
+-- License:     BSD3
+-- Maintainer:  Bryan O'Sullivan <bos@mailrank.com>
+-- Stability:   experimental
+-- Portability: portable
+--
+-- Types for working with the direct bindings to the C @mysqlclient@
+-- API.
+
 module Database.MySQL.Base.Types
     (
     -- * Types

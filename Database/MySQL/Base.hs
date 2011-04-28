@@ -1,7 +1,20 @@
 {-# LANGUAGE DeriveDataTypeable, ForeignFunctionInterface, RecordWildCards #-}
 
+-- |
+-- Module:      Database.MySQL.Base
+-- Copyright:   (c) 2011 MailRank, Inc.
+-- License:     BSD3
+-- Maintainer:  Bryan O'Sullivan <bos@mailrank.com>
+-- Stability:   experimental
+-- Portability: portable
+--
+-- A low-level client library for the MySQL database, implemented as
+-- bindings to the C @mysqlclient@ API.
+
 module Database.MySQL.Base
     (
+    -- * Licensing
+    -- $license
     -- * Resource management
     -- $mgmt
     -- * Types
@@ -82,6 +95,16 @@ import Foreign.Marshal.Array (peekArray)
 import Foreign.Ptr (Ptr, castPtr, nullPtr)
 import System.IO.Unsafe (unsafePerformIO)
 import System.Mem.Weak (Weak, deRefWeak, mkWeakPtr)
+
+-- $license
+--
+-- /Important licensing note/: This library is BSD-licensed under the
+-- terms of the MySQL FOSS License Exception
+-- <http://www.mysql.com/about/legal/licensing/foss-exception/>.
+--
+-- Since this library links against the GPL-licensed @mysqlclient@
+-- library, a non-open-source application that uses it /may/ be
+-- subject to the terms of the GPL.
 
 -- $mgmt
 --

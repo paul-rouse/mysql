@@ -6,8 +6,16 @@ synopsis:       A low-level MySQL client library.
 description:    
     A low-level client library for the MySQL database, implemented as
     bindings to the C @mysqlclient@ API.
-license:        LGPL
-license-file:   COPYING
+    .
+    /Important licensing note/: This library is BSD-licensed under the
+    terms of the MySQL FOSS License Exception
+    <http://www.mysql.com/about/legal/licensing/foss-exception/>.
+    .
+    Since this library links against the GPL-licensed @mysqlclient@
+    library, a non-open-source application that uses it /may/ be
+    subject to the terms of the GPL.
+license:        BSD3
+license-file:   LICENSE
 author:         Bryan O'Sullivan <bos@mailrank.com>
 maintainer:     Bryan O'Sullivan <bos@mailrank.com>
 copyright:      2011 MailRank, Inc.
