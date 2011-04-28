@@ -15,6 +15,8 @@ module Database.MySQL.Types
     , MYSQL
     , MYSQL_RES
     , MYSQL_ROW
+    , MYSQL_ROWS
+    , MYSQL_ROW_OFFSET
     , MyBool
     -- * Field flags
     , hasAllFlags
@@ -48,7 +50,9 @@ import Data.Word
 
 data MYSQL
 data MYSQL_RES
+data MYSQL_ROWS
 type MYSQL_ROW = Ptr (Ptr CChar)
+type MYSQL_ROW_OFFSET = Ptr MYSQL_ROWS
 type MyBool = CChar
 
 -- | Column types supported by MySQL.

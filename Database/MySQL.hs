@@ -16,6 +16,7 @@ module Database.MySQL
     , Result
     , Field
     , Type(..)
+    , Row
     , MySQLError(errFunction, errNumber, errMessage)
     -- * Connection management
     , connect
@@ -47,8 +48,14 @@ module Database.MySQL
     , useResult
     , fetchRow
     , fetchFields
+    , dataSeek
+    , rowSeek
+    , rowTell
     -- ** Multiple results
     , nextResult
+    -- * Transactions
+    , commit
+    , rollback
     -- * General information
     , clientInfo
     , clientVersion
@@ -387,6 +394,20 @@ fetchFields res@Result{..} = withRes "fetchFields" res $ \ptr -> do
   peekArray resFields =<< resFetchFields ptr
 fetchFields EmptyResult{..} = return []
 
+newtype Row = Row MYSQL_ROW_OFFSET
+
+dataSeek :: Result -> Int64 -> IO ()
+dataSeek res row = withRes "dataSeek" res $ \ptr ->
+  mysql_data_seek ptr (fromIntegral row)
+
+rowTell :: Result -> IO Row
+rowTell res = withRes "rowTell" res $ \ptr ->
+  Row <$> mysql_row_tell ptr
+
+rowSeek :: Result -> Row -> IO Row
+rowSeek res (Row row) = withRes "rowSeek" res $ \ptr ->
+  Row <$> mysql_row_seek ptr row
+
 nextResult :: Connection -> IO Bool
 nextResult conn = withConn conn $ \ptr -> do
   i <- withRTSSignalsBlocked $ mysql_next_result ptr
@@ -394,6 +415,14 @@ nextResult conn = withConn conn $ \ptr -> do
     0  -> return True
     -1 -> return False
     _  -> connectionError "nextResult" conn
+
+commit :: Connection -> IO ()
+commit conn = withConn conn $ \ptr ->
+              mysql_commit ptr >>= check "commit" conn
+
+rollback :: Connection -> IO ()
+rollback conn = withConn conn $ \ptr ->
+                mysql_rollback ptr >>= check "rollback" conn
 
 escape :: Connection -> ByteString -> IO ByteString
 escape conn bs = withConn conn $ \ptr ->

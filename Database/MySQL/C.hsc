@@ -38,8 +38,14 @@ module Database.MySQL.C
     , mysql_free_result
     , mysql_fetch_fields
     , mysql_fetch_fields_nonblock
+    , mysql_data_seek
+    , mysql_row_seek
+    , mysql_row_tell
     -- ** Multiple results
     , mysql_next_result
+    -- * Transactions
+    , mysql_commit
+    , mysql_rollback
     -- * General information
     , mysql_get_client_info
     , mysql_get_client_version
@@ -263,8 +269,23 @@ foreign import ccall unsafe mysql_fetch_fields
 foreign import ccall safe "mysql.h mysql_fetch_fields" mysql_fetch_fields_nonblock
     :: Ptr MYSQL_RES -> IO (Ptr Field)
 
+foreign import ccall safe mysql_data_seek
+    :: Ptr MYSQL_RES -> CULLong -> IO ()
+
+foreign import ccall safe mysql_row_seek
+    :: Ptr MYSQL_RES -> MYSQL_ROW_OFFSET -> IO MYSQL_ROW_OFFSET
+
+foreign import ccall safe mysql_row_tell
+    :: Ptr MYSQL_RES -> IO MYSQL_ROW_OFFSET
+
 foreign import ccall unsafe mysql_next_result
     :: Ptr MYSQL -> IO CInt
+
+foreign import ccall unsafe mysql_commit
+    :: Ptr MYSQL -> IO MyBool
+
+foreign import ccall unsafe mysql_rollback
+    :: Ptr MYSQL -> IO MyBool
 
 foreign import ccall unsafe mysql_fetch_row
     :: Ptr MYSQL_RES -> IO MYSQL_ROW
