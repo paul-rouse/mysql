@@ -173,6 +173,8 @@ mysql_options ptr opt =
         withBool b $ go (#const MYSQL_OPT_RECONNECT)
       SSLVerifyServerCert b ->
         withBool b $ go (#const MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+      -- Other options are accepted by mysql_real_connect, so ignore them.
+      _ -> return 0
   where
     go = mysql_options_ ptr
     withBool b = with (if b then 1 else 0 :: CUInt)
@@ -189,6 +191,7 @@ foreign import ccall unsafe mysql_real_connect
     -> CString   -- ^ Database.
     -> CInt      -- ^ Port.
     -> CString   -- ^ Unix socket.
+    -> CULong    -- ^ Flags.
     -> IO (Ptr MYSQL)
 
 foreign import ccall safe mysql_ssl_set

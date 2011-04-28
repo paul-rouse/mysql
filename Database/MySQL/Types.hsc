@@ -30,6 +30,8 @@ module Database.MySQL.Types
     , flagAutoIncrement
     , flagNumeric
     , flagNoDefaultValue
+    -- * Connect flags
+    , toConnectFlag
     ) where
 
 #include "mysql.h"
@@ -224,7 +226,9 @@ data Protocol = TCP
               | Memory
                 deriving (Eq, Read, Show, Enum, Typeable)
 
-data Option = ConnectTimeout Seconds
+data Option =
+            -- Options accepted by mysq_options.
+              ConnectTimeout Seconds
             | Compress
             | NamedPipe
             | InitCommand ByteString
@@ -245,4 +249,25 @@ data Option = ConnectTimeout Seconds
             | ReportDataTruncation Bool
             | Reconnect Bool
             | SSLVerifyServerCert Bool
+            -- Flags accepted by mysql_real_connect.
+            | FoundRows
+            | IgnoreSIGPIPE
+            | IgnoreSpace
+            | Interactive
+            | LocalFiles
+            | MultiResults
+            | MultiStatements
+            | NoSchema
               deriving (Eq, Read, Show, Typeable)
+
+toConnectFlag :: Option -> CULong
+toConnectFlag Compress  = #const CLIENT_COMPRESS
+toConnectFlag FoundRows = #const CLIENT_FOUND_ROWS
+toConnectFlag IgnoreSIGPIPE = #const CLIENT_IGNORE_SIGPIPE
+toConnectFlag IgnoreSpace = #const CLIENT_IGNORE_SPACE
+toConnectFlag Interactive = #const CLIENT_INTERACTIVE
+toConnectFlag LocalFiles = #const CLIENT_LOCAL_FILES
+toConnectFlag MultiResults = #const CLIENT_MULTI_RESULTS
+toConnectFlag MultiStatements = #const CLIENT_MULTI_STATEMENTS
+toConnectFlag NoSchema = #const CLIENT_NO_SCHEMA
+toConnectFlag _        = 0

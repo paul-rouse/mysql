@@ -66,7 +66,7 @@ import Data.ByteString.Internal
 import Data.ByteString.Unsafe
 import Database.MySQL.Types
 import System.Mem.Weak
-    
+import Data.List    
 import Control.Applicative
 import Data.Int
 import Data.Typeable (Typeable)
@@ -203,13 +203,15 @@ connect ConnectInfo{..} = do
   forM_ connectOptions $ \opt -> do
     r <- mysql_options ptr0 opt
     unless (r == 0) $ connectionError_ "connect" ptr0
+  let flags = foldl' (+) 0 . map toConnectFlag $ connectOptions
   ptr <- withString connectHost $ \chost ->
           withString connectUser $ \cuser ->
            withString connectPassword $ \cpass ->
             withString connectDatabase $ \cdb ->
-             withRTSSignalsBlocked . withString connectPath $
-              mysql_real_connect ptr0 chost cuser cpass cdb
-                                 (fromIntegral connectPort)
+             withString connectPath $ \cpath ->
+              withRTSSignalsBlocked $
+               mysql_real_connect ptr0 chost cuser cpass cdb
+                                  (fromIntegral connectPort) cpath flags
   when (ptr == nullPtr) $
     connectionError_ "connect" ptr0
   res <- newIORef Nothing
