@@ -7,7 +7,7 @@ module Database.MySQL
     , Option(..)
     , defaultConnectInfo
     , Connection
-    , Result(resConnection)
+    , Result(resConnection, resFields)
     , Field
     , Type
     , MySQLError(errFunction, errNumber, errMessage)
@@ -34,15 +34,16 @@ module Database.MySQL
     -- ** Results
     , fieldCount
     , affectedRows
-    , storeResult
     -- * Working with results
+    , storeResult
+    , fetchRow
     , fetchFields
     -- * General information
     , clientInfo
     , clientVersion
     ) where
 
-import Data.ByteString.Char8
+import Data.ByteString.Char8 (ByteString)
 import Data.ByteString.Internal
 import Data.ByteString.Unsafe
     
@@ -87,6 +88,7 @@ data Connection = Connection {
 
 data Result = Result {
       resFP :: ForeignPtr MYSQL_RES
+    , resFields :: {-# UNPACK #-} !Int
     , resConnection :: Connection
     }
 
@@ -116,7 +118,7 @@ connect ConnectInfo{..} = do
               mysql_real_connect ptr0 chost cuser cpass cdb
                                  (fromIntegral connectPort)
   when (ptr == nullPtr) $
-    connectionError "connect" ptr0
+    connectionError_ "connect" ptr0
   fp <- newForeignPtr ptr $ realClose closed ptr
   return Connection {
                connFP = fp
@@ -133,7 +135,7 @@ realClose closeInfo ptr = do
 
 ping :: Connection -> IO ()
 ping conn = withConn conn $ \ptr ->
-            withRTSSignalsBlocked (mysql_ping ptr) >>= check "ping" ptr
+            withRTSSignalsBlocked (mysql_ping ptr) >>= check "ping" conn
 
 threadId :: Connection -> IO Word
 threadId conn = fromIntegral <$> withConn conn mysql_thread_id
@@ -154,23 +156,20 @@ setCharacterSet :: Connection -> String -> IO ()
 setCharacterSet conn cs =
   withCString cs $ \ccs ->
     withConn conn $ \ptr ->
-        mysql_set_character_set ptr ccs >>= check "setCharacterSet" ptr
+        mysql_set_character_set ptr ccs >>= check "setCharacterSet" conn
 
 characterSet :: Connection -> IO String
 characterSet conn = withConn conn $ \ptr ->
-                        peekCString =<< mysql_character_set_name ptr
+  peekCString =<< mysql_character_set_name ptr
 
 sslCipher :: Connection -> IO (Maybe String)
-sslCipher conn = withConn conn $ \ptr -> do
-  name <- mysql_get_ssl_cipher ptr
-  if name == nullPtr
-    then return Nothing
-    else Just <$> peekCString name
+sslCipher conn = withConn conn $ \ptr ->
+  withPtr peekCString =<< mysql_get_ssl_cipher ptr
 
 serverStatus :: Connection -> IO String
 serverStatus conn = withConn conn $ \ptr -> do
   st <- withRTSSignalsBlocked $ mysql_stat ptr
-  check "serverStatus" ptr (ptrToIntPtr st)
+  checkNull "serverStatus" conn st
   peekCString st
 
 clientInfo :: String
@@ -183,7 +182,7 @@ clientVersion = fromIntegral mysql_get_client_version
 
 autocommit :: Connection -> Bool -> IO ()
 autocommit conn onOff = withConn conn $ \ptr ->
-   withRTSSignalsBlocked (mysql_autocommit ptr b) >>= check "autocommit" ptr
+   withRTSSignalsBlocked (mysql_autocommit ptr b) >>= check "autocommit" conn
  where b = if onOff then 1 else 0
 
 changeUser :: Connection -> String -> String -> Maybe String -> IO ()
@@ -193,18 +192,18 @@ changeUser conn user pass mdb =
     withMaybeString mdb $ \cdb ->
      withConn conn $ \ptr ->
       withRTSSignalsBlocked (mysql_change_user ptr cuser cpass cdb) >>=
-      check "changeUser" ptr
+      check "changeUser" conn
 
 selectDB :: Connection -> String -> IO ()
 selectDB conn db = 
   withCString db $ \cdb ->
     withConn conn $ \ptr ->
-      withRTSSignalsBlocked (mysql_select_db ptr cdb) >>= check "selectDB" ptr
+      withRTSSignalsBlocked (mysql_select_db ptr cdb) >>= check "selectDB" conn
 
 query :: Connection -> ByteString -> IO ()
 query conn q = withConn conn $ \ptr ->
   unsafeUseAsCStringLen q $ \(p,l) ->
-  mysql_real_query ptr p (fromIntegral l) >>= check "query" ptr
+  mysql_real_query ptr p (fromIntegral l) >>= check "query" conn
 
 fieldCount :: Connection -> IO Int
 fieldCount conn = withConn conn $ fmap fromIntegral . mysql_field_count
@@ -214,19 +213,35 @@ affectedRows conn = withConn conn $ fmap fromIntegral . mysql_affected_rows
 
 storeResult :: Connection -> IO (Maybe Result)
 storeResult conn = withConn conn $ \ptr -> do
-  res <- mysql_store_result ptr
+  res <- withRTSSignalsBlocked $ mysql_store_result ptr
+  fields <- mysql_field_count ptr
   if res == nullPtr
-    then do
-      n <- mysql_field_count ptr
-      if n == 0
-        then return Nothing
-        else connectionError "storeResult" ptr
+    then if fields == 0
+         then return Nothing
+         else connectionError "storeResult" conn
     else do
       fp <- newForeignPtr res $ mysql_free_result res
       return . Just $ Result {
                    resFP = fp
+                 , resFields = fromIntegral fields
                  , resConnection = conn
                  }
+
+fetchRow :: Result -> IO [Maybe ByteString]
+fetchRow res@Result{..}
+    | resFields == 0 = return []
+    | otherwise      = withRes res $ \ptr -> do
+  rowPtr <- mysql_fetch_row ptr
+  if rowPtr == nullPtr
+    then return []
+    else do
+      lenPtr <- mysql_fetch_lengths ptr
+      checkNull "fetchRow" resConnection lenPtr
+      let go len = withPtr $ \colPtr ->
+                   create (fromIntegral len) $ \d ->
+                   memcpy d (castPtr colPtr) (fromIntegral len)
+      sequence =<< zipWith go <$> peekArray resFields lenPtr
+                              <*> peekArray resFields rowPtr
 
 fetchFields :: Result -> IO [Field]
 fetchFields res = withRes res $ \ptr -> do
@@ -255,12 +270,23 @@ withMaybeString :: Maybe String -> (CString -> IO a) -> IO a
 withMaybeString Nothing act = act nullPtr
 withMaybeString (Just xs) act = withCString xs act
 
-check :: Num a => String -> Ptr MYSQL -> a -> IO ()
-check func ptr r = unless (r == 0) $ connectionError func ptr
+check :: Num a => String -> Connection -> a -> IO ()
+check func conn r = unless (r == 0) $ connectionError func conn
 {-# INLINE check #-}
 
-connectionError :: String -> Ptr MYSQL -> IO a
-connectionError func ptr = do
+checkNull :: String -> Connection -> Ptr a -> IO ()
+checkNull func conn p = when (p == nullPtr) $ connectionError func conn
+{-# INLINE checkNull #-}
+
+withPtr :: (Ptr a -> IO b) -> Ptr a -> IO (Maybe b)
+withPtr act p | p == nullPtr = return Nothing
+              | otherwise    = Just <$> act p
+
+connectionError :: String -> Connection -> IO a
+connectionError func conn = withConn conn $ connectionError_ func
+
+connectionError_ :: String -> Ptr MYSQL -> IO a
+connectionError_ func ptr =do
   errno <- mysql_errno ptr
   msg <- peekCString =<< mysql_error ptr
   throw $ ConnectionError func (fromIntegral errno) msg

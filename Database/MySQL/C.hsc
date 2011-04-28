@@ -11,7 +11,7 @@ module Database.MySQL.C
     -- * Low-level types
     , MYSQL
     , MYSQL_RES
-    , MYSQL_STMT
+    , MYSQL_ROW
     , MyBool
     -- * Connection management
     , mysql_init
@@ -38,6 +38,9 @@ module Database.MySQL.C
     , mysql_field_count
     , mysql_affected_rows
     , mysql_store_result
+    , mysql_use_result
+    , mysql_fetch_lengths
+    , mysql_fetch_row
     -- * Working with results
     , mysql_free_result
     , mysql_fetch_fields
@@ -59,8 +62,6 @@ module Database.MySQL.C
     -- * Error handling
     , mysql_errno
     , mysql_error
-    , mysql_stmt_errno
-    , mysql_stmt_error
     -- * Support functions
     , withRTSSignalsBlocked
     ) where
@@ -80,7 +81,6 @@ import Foreign.C.String (CString)
 import Foreign.C.Types
 import Foreign.ForeignPtr (ForeignPtr, mallocForeignPtr, withForeignPtr)
 import Foreign.Ptr (Ptr, castPtr, nullPtr)
-import Foreign.Storable (Storable(..))
 import System.IO.Unsafe (unsafePerformIO)
 import Foreign.Storable
 import Data.Typeable (Typeable)
@@ -90,7 +90,7 @@ import Data.Word
 
 data MYSQL
 data MYSQL_RES
-data MYSQL_STMT
+type MYSQL_ROW = Ptr (Ptr CChar)
 type MyBool = CChar
 
 -- | Column types supported by MySQL.
@@ -378,11 +378,20 @@ foreign import ccall safe mysql_affected_rows
 foreign import ccall unsafe mysql_store_result
     :: Ptr MYSQL -> IO (Ptr MYSQL_RES)
 
+foreign import ccall unsafe mysql_use_result
+    :: Ptr MYSQL -> IO (Ptr MYSQL_RES)
+
 foreign import ccall unsafe mysql_free_result
     :: Ptr MYSQL_RES -> IO ()
 
 foreign import ccall unsafe mysql_fetch_fields
     :: Ptr MYSQL_RES -> IO (Ptr Field)
+
+foreign import ccall unsafe mysql_fetch_row
+    :: Ptr MYSQL_RES -> IO MYSQL_ROW
+
+foreign import ccall unsafe mysql_fetch_lengths
+    :: Ptr MYSQL_RES -> IO (Ptr CULong)
 
 foreign import ccall safe mysql_real_escape_string
     :: Ptr MYSQL -> CString -> CString -> CULong -> IO CULong
@@ -396,9 +405,3 @@ foreign import ccall safe mysql_errno
 
 foreign import ccall safe mysql_error
     :: Ptr MYSQL -> IO CString
-
-foreign import ccall safe mysql_stmt_errno
-    :: Ptr MYSQL_STMT -> IO CInt
-
-foreign import ccall safe mysql_stmt_error
-    :: Ptr MYSQL_STMT -> IO CString
