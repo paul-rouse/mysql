@@ -27,7 +27,6 @@ module Database.MySQL.Base
     , defaultSSLInfo
     , Connection
     , Result
-    , Field
     , Type(..)
     , Row
     , MySQLError(errFunction, errNumber, errMessage)
