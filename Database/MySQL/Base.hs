@@ -221,7 +221,7 @@ defaultConnectInfo = ConnectInfo {
                      , connectUser = "root"
                      , connectPassword = ""
                      , connectDatabase = "test"
-                     , connectOptions = []
+                     , connectOptions = [CharsetName "utf8"]
                      , connectPath = ""
                      , connectSSL = Nothing
                      }
