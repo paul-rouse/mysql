@@ -211,6 +211,18 @@ newtype Row = Row MYSQL_ROW_OFFSET
 
 -- | Default information for setting up a connection.
 --
+-- Defaults are as follows:
+--
+-- * Server on @localhost@
+--
+-- * User @root@
+--
+-- * No password
+--
+-- * Database @test@
+--
+-- * Character set @utf8@
+--
 -- Use as in the following example:
 --
 -- > connect defaultConnectInfo { connectHost = "db.example.com" }
