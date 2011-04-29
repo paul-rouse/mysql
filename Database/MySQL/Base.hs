@@ -188,12 +188,14 @@ data MySQLError = ConnectionError {
 
 instance Exception MySQLError
 
+-- | Connection to a MySQL database.
 data Connection = Connection {
       connFP :: ForeignPtr MYSQL
     , connClose :: IO ()
     , connResult :: IORef (Maybe (Weak Result))
     }
 
+-- | Result of a database query.
 data Result = Result {
       resFP :: ForeignPtr MYSQL_RES
     , resFields :: {-# UNPACK #-} !Int
@@ -234,6 +236,7 @@ defaultSSLInfo = SSLInfo {
                  , sslCiphers = ""
                  }
 
+-- | Connect to a database.
 connect :: ConnectInfo -> IO Connection
 connect ConnectInfo{..} = do
   closed <- newIORef False
@@ -335,6 +338,11 @@ clientVersion :: Word
 clientVersion = fromIntegral mysql_get_client_version
 {-# NOINLINE clientVersion #-}
 
+-- | Turn autocommit on or off.
+--
+-- By default, MySQL runs with autocommit mode enabled. In this mode,
+-- as soon as you modify a table, MySQL stores your modification
+-- permanently.
 autocommit :: Connection -> Bool -> IO ()
 autocommit conn onOff = withConn conn $ \ptr ->
    withRTSSignalsBlocked (mysql_autocommit ptr b) >>= check "autocommit" conn
@@ -360,6 +368,10 @@ query conn q = withConn conn $ \ptr ->
   unsafeUseAsCStringLen q $ \(p,l) ->
   mysql_real_query ptr p (fromIntegral l) >>= check "query" conn
 
+-- | Return the value generated for an @AUTO_INCREMENT@ column by the
+-- previous @INSERT@ or @UPDATE@ statement.
+--
+-- See <http://dev.mysql.com/doc/refman/5.5/en/mysql-insert-id.html>
 insertID :: Connection -> IO Word64
 insertID conn = fromIntegral <$> (withConn conn $ mysql_insert_id)
 
@@ -492,10 +504,12 @@ nextResult conn = withConn conn $ \ptr -> do
     -1 -> return False
     _  -> connectionError "nextResult" conn
 
+-- | Commit the current transaction.
 commit :: Connection -> IO ()
 commit conn = withConn conn $ \ptr ->
               mysql_commit ptr >>= check "commit" conn
 
+-- | Roll back the current transaction.
 rollback :: Connection -> IO ()
 rollback conn = withConn conn $ \ptr ->
                 mysql_rollback ptr >>= check "rollback" conn
