@@ -1,5 +1,5 @@
 name:           mysql
-version:        0.1.0.1
+version:        0.1.1.0
 homepage:       https://github.com/mailrank/mysql
 bug-reports:    https://github.com/mailrank/mysql/issues
 synopsis:       A low-level MySQL client library.
@@ -30,6 +30,10 @@ flag developer
   default: False
 
 library
+  c-sources: cbits/mysql_signals.c
+
+  include-dirs: include
+
   exposed-modules:
     Database.MySQL.Base
     Database.MySQL.Base.C

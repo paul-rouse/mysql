@@ -271,7 +271,6 @@ connect ConnectInfo{..} = do
            withString connectPassword $ \cpass ->
             withString connectDatabase $ \cdb ->
              withString connectPath $ \cpath ->
-              withRTSSignalsBlocked $
                mysql_real_connect ptr0 chost cuser cpass cdb
                                   (fromIntegral connectPort) cpath flags
   when (ptr == nullPtr) $
@@ -280,7 +279,7 @@ connect ConnectInfo{..} = do
   let realClose = do
         cleanupConnResult res
         wasClosed <- atomicModifyIORef closed $ \prev -> (True, prev)
-        unless wasClosed . withRTSSignalsBlocked $ mysql_close ptr
+        unless wasClosed $ mysql_close ptr
   fp <- newForeignPtr ptr realClose
   return Connection {
                connFP = fp
@@ -304,8 +303,7 @@ close = connClose
 {-# INLINE close #-}
 
 ping :: Connection -> IO ()
-ping conn = withConn conn $ \ptr ->
-            withRTSSignalsBlocked (mysql_ping ptr) >>= check "ping" conn
+ping conn = withConn conn $ \ptr -> mysql_ping ptr >>= check "ping" conn
 
 threadId :: Connection -> IO Word
 threadId conn = fromIntegral <$> withConn conn mysql_thread_id
@@ -338,7 +336,7 @@ sslCipher conn = withConn conn $ \ptr ->
 
 serverStatus :: Connection -> IO String
 serverStatus conn = withConn conn $ \ptr -> do
-  st <- withRTSSignalsBlocked $ mysql_stat ptr
+  st <- mysql_stat ptr
   checkNull "serverStatus" conn st
   peekCString st
 
@@ -357,7 +355,7 @@ clientVersion = fromIntegral mysql_get_client_version
 -- permanently.
 autocommit :: Connection -> Bool -> IO ()
 autocommit conn onOff = withConn conn $ \ptr ->
-   withRTSSignalsBlocked (mysql_autocommit ptr b) >>= check "autocommit" conn
+   mysql_autocommit ptr b >>= check "autocommit" conn
  where b = if onOff then 1 else 0
 
 changeUser :: Connection -> String -> String -> Maybe String -> IO ()
@@ -366,14 +364,13 @@ changeUser conn user pass mdb =
    withCString pass $ \cpass ->
     withMaybeString mdb $ \cdb ->
      withConn conn $ \ptr ->
-      withRTSSignalsBlocked (mysql_change_user ptr cuser cpass cdb) >>=
-      check "changeUser" conn
+      mysql_change_user ptr cuser cpass cdb >>= check "changeUser" conn
 
 selectDB :: Connection -> String -> IO ()
-selectDB conn db = 
+selectDB conn db =
   withCString db $ \cdb ->
     withConn conn $ \ptr ->
-      withRTSSignalsBlocked (mysql_select_db ptr cdb) >>= check "selectDB" conn
+      mysql_select_db ptr cdb >>= check "selectDB" conn
 
 query :: Connection -> ByteString -> IO ()
 query conn q = withConn conn $ \ptr ->
@@ -419,9 +416,9 @@ storeResult = frobResult "storeResult" mysql_store_result
 -- Any previous outstanding 'Result' is first marked as invalid.
 useResult :: Connection -> IO Result
 useResult = frobResult "useResult" mysql_use_result
-            (withRTSSignalsBlocked . mysql_fetch_fields)
-            (withRTSSignalsBlocked . mysql_fetch_row)
-            (withRTSSignalsBlocked . mysql_fetch_lengths)
+            mysql_fetch_fields
+            mysql_fetch_row
+            mysql_fetch_lengths
 
 frobResult :: String
            -> (Ptr MYSQL -> IO (Ptr MYSQL_RES))
@@ -432,7 +429,7 @@ frobResult :: String
 frobResult func frob fetchFieldsFunc fetchRowFunc fetchLengthsFunc conn =
   withConn conn $ \ptr -> do
     cleanupConnResult (connResult conn)
-    res <- withRTSSignalsBlocked $ frob ptr
+    res <- frob ptr
     fields <- mysql_field_count ptr
     valid <- newIORef True
     if res == nullPtr
@@ -465,12 +462,12 @@ freeResult EmptyResult{..} = return ()
 isResultValid :: Result -> IO Bool
 isResultValid Result{..}  = readIORef resValid
 isResultValid EmptyResult = return False
-            
+
 freeResult_ :: IORef Bool -> Ptr MYSQL_RES -> IO ()
 freeResult_ valid ptr = do
   wasValid <- atomicModifyIORef valid $ \prev -> (False, prev)
   when wasValid $ mysql_free_result ptr
-    
+
 fetchRow :: Result -> IO [Maybe ByteString]
 fetchRow res@Result{..}  = withRes "fetchRow" res $ \ptr -> do
   rowPtr <- resFetchRow ptr
@@ -510,7 +507,7 @@ rowSeek res (Row row) = withRes "rowSeek" res $ \ptr ->
 nextResult :: Connection -> IO Bool
 nextResult conn = withConn conn $ \ptr -> do
   cleanupConnResult (connResult conn)
-  i <- withRTSSignalsBlocked $ mysql_next_result ptr
+  i <- mysql_next_result ptr
   case i of
     0  -> return True
     -1 -> return False
