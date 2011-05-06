@@ -23,6 +23,7 @@ category:       Database
 build-type:     Custom
 cabal-version:  >= 1.6
 extra-source-files:
+    include/mysql_signals.h
     README.markdown
 
 flag developer
