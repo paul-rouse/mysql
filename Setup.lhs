@@ -38,7 +38,8 @@ mysqlBuildInfo lbi = do
 
   return emptyBuildInfo {
     extraLibDirs = map (drop 2) . filter ("-L" `isPrefixOf`) $ libs
-  , extraLibs = map (drop 2) . filter ("-l" `isPrefixOf`) $ libs
+  , extraLibs = map (drop 2) . filter ("-l" `isPrefixOf`) .
+                filter (/= "-lmygcc") $ libs
   , includeDirs = map (drop 2) include
   }
 \end{code}
