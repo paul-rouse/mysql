@@ -1,5 +1,5 @@
 name:           mysql
-version:        0.1.1.1
+version:        0.1.1.2
 homepage:       https://github.com/mailrank/mysql
 bug-reports:    https://github.com/mailrank/mysql/issues
 synopsis:       A low-level MySQL client library.
