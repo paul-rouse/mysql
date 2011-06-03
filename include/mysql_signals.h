@@ -17,6 +17,8 @@ MYSQL *STDCALL _hs_mysql_real_connect(MYSQL *mysql, const char *host,
 				      unsigned long clientflag);
 void STDCALL _hs_mysql_close(MYSQL *sock);
 int STDCALL _hs_mysql_ping(MYSQL *mysql);
+int STDCALL _hs_mysql_real_query(MYSQL *mysql, const char *q,
+				 unsigned long length);
 const char *STDCALL _hs_mysql_stat(MYSQL *mysql);
 my_bool STDCALL _hs_mysql_autocommit(MYSQL * mysql, my_bool auto_mode);
 my_bool STDCALL _hs_mysql_change_user(MYSQL *mysql, const char *user,

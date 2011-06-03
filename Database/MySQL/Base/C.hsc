@@ -199,7 +199,7 @@ foreign import ccall safe mysql_get_ssl_cipher
 foreign import ccall unsafe mysql_stat
     :: Ptr MYSQL -> IO CString
 
-foreign import ccall unsafe mysql_real_query
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_real_query" mysql_real_query
     :: Ptr MYSQL -> CString -> CULong -> IO CInt
 
 foreign import ccall safe mysql_insert_id

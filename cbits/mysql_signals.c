@@ -66,6 +66,16 @@ int STDCALL _hs_mysql_ping(MYSQL *mysql)
     return ret;
 }
 
+int STDCALL _hs_mysql_real_query(MYSQL *mysql, const char *q,
+				 unsigned long length)
+{
+    int ret;
+    block_rts_signals();
+    ret = mysql_real_query(mysql, q, length);
+    unblock_rts_signals();
+    return ret;
+}
+
 const char *STDCALL _hs_mysql_stat(MYSQL *mysql)
 {
     const char *ret;
