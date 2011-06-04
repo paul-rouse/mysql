@@ -85,6 +85,24 @@ const char *STDCALL _hs_mysql_stat(MYSQL *mysql)
     return ret;
 }
 
+my_bool STDCALL _hs_mysql_commit(MYSQL * mysql)
+{
+    my_bool ret;
+    block_rts_signals();
+    ret = mysql_commit(mysql);
+    unblock_rts_signals();
+    return ret;
+}
+
+my_bool STDCALL _hs_mysql_rollback(MYSQL * mysql)
+{
+    my_bool ret;
+    block_rts_signals();
+    ret = mysql_rollback(mysql);
+    unblock_rts_signals();
+    return ret;
+}
+
 my_bool STDCALL _hs_mysql_autocommit(MYSQL *mysql, my_bool auto_mode)
 {
     my_bool ret;
@@ -156,6 +174,13 @@ MYSQL_RES *STDCALL _hs_mysql_use_result(MYSQL *mysql)
     ret = mysql_use_result(mysql);
     unblock_rts_signals();
     return ret;
+}
+
+void STDCALL _hs_mysql_free_result(MYSQL_RES *result)
+{
+    block_rts_signals();
+    mysql_free_result(result);
+    unblock_rts_signals();
 }
 
 int STDCALL _hs_mysql_next_result(MYSQL *mysql)
