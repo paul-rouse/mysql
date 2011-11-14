@@ -1,7 +1,7 @@
 name:           mysql
 version:        0.1.1.1
-homepage:       https://github.com/mailrank/mysql
-bug-reports:    https://github.com/mailrank/mysql/issues
+homepage:       https://github.com/bos/mysql
+bug-reports:    https://github.com/bos/mysql/issues
 synopsis:       A low-level MySQL client library.
 description:    
     A low-level client library for the MySQL database, implemented as
@@ -16,8 +16,8 @@ description:
     subject to the terms of the GPL.
 license:        BSD3
 license-file:   LICENSE
-author:         Bryan O'Sullivan <bos@mailrank.com>
-maintainer:     Bryan O'Sullivan <bos@mailrank.com>
+author:         Bryan O'Sullivan <bos@serpentine.com>
+maintainer:     Bryan O'Sullivan <bos@serpentine.com>
 copyright:      2011 MailRank, Inc.
 category:       Database
 build-type:     Custom
@@ -55,7 +55,7 @@ library
 
 source-repository head
   type:     git
-  location: http://github.com/mailrank/mysql
+  location: http://github.com/bos/mysql
 
 source-repository head
   type:     mercurial
