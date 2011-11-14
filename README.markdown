@@ -29,11 +29,11 @@ We are happy to receive bug reports, fixes, documentation enhancements,
 and other improvements.
 
 Please report bugs via the
-[github issue tracker](http://github.com/mailrank/mysql/issues).
+[github issue tracker](http://github.com/bos/mysql/issues).
 
-Master [git repository](http://github.com/mailrank/mysql):
+Master [git repository](http://github.com/bos/mysql):
 
-* `git clone git://github.com/mailrank/mysql.git`
+* `git clone git://github.com/bos/mysql.git`
 
 There's also a [Mercurial mirror](http://bitbucket.org/bos/mysql):
 
@@ -44,4 +44,4 @@ There's also a [Mercurial mirror](http://bitbucket.org/bos/mysql):
 # Authors
 
 This library is written and maintained by Bryan O'Sullivan,
-<bos@mailrank.com>.
+<bos@serpentine.com>.
