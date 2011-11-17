@@ -2,11 +2,12 @@
 
 This library is a Haskell binding to the MySQL `mysqlclient` client
 library.  It is a fairly faithful, low level library that implements
-most of the MySQL client API.
+most of the MySQL client API.  The major departure from the C API is
+that in Haskell, resource management is mostly automatic and safe.
 
 This library deliberately avoids the question of providing a "good"
-API. Its purpose is to serve as a base on which higher-level libraries
-can be build.
+API. Its purpose is to serve as a base upon which higher-level
+libraries can be built.
 
 # Licensing
 
@@ -19,9 +20,9 @@ to the terms of the GPL.
 
 # To do
 
-* Add support for prepared statements. This API is huge and of dubious
-  performance worth, so it's not currently a priority for me. Patches
-  welcome!
+* Add support for prepared statements. The prepared statement API is
+  huge and of dubious performance value, so it's not currently a
+  priority for us. Patches welcome!
 
 # Get involved!
 

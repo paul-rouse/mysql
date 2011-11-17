@@ -46,6 +46,7 @@ module Database.MySQL.Base.C
     , mysql_fetch_row_nonblock
     -- * Working with results
     , mysql_free_result
+    , mysql_free_result_nonblock
     , mysql_fetch_fields
     , mysql_fetch_fields_nonblock
     , mysql_data_seek
@@ -154,26 +155,26 @@ foreign import ccall safe mysql_ssl_set
     -> CString                  -- ^ Ciphers.
     -> IO MyBool
 
-foreign import ccall unsafe mysql_close
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_close" mysql_close
     :: Ptr MYSQL -> IO ()
 
-foreign import ccall unsafe mysql_ping
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_ping" mysql_ping
     :: Ptr MYSQL -> IO CInt
 
 foreign import ccall safe mysql_thread_id
     :: Ptr MYSQL -> IO CULong
 
-foreign import ccall unsafe mysql_autocommit
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_autocommit" mysql_autocommit
     :: Ptr MYSQL -> MyBool -> IO MyBool
 
-foreign import ccall unsafe mysql_change_user
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_change_user" mysql_change_user
     :: Ptr MYSQL
     -> CString                  -- ^ user
     -> CString                  -- ^ password
     -> CString                  -- ^ database
     -> IO MyBool
 
-foreign import ccall unsafe mysql_select_db
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_select_db" mysql_select_db
     :: Ptr MYSQL
     -> CString
     -> IO CInt
@@ -196,10 +197,10 @@ foreign import ccall safe mysql_set_character_set
 foreign import ccall safe mysql_get_ssl_cipher
     :: Ptr MYSQL -> IO CString
 
-foreign import ccall unsafe mysql_stat
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_stat" mysql_stat
     :: Ptr MYSQL -> IO CString
 
-foreign import ccall unsafe mysql_real_query
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_real_query" mysql_real_query
     :: Ptr MYSQL -> CString -> CULong -> IO CInt
 
 foreign import ccall safe mysql_insert_id
@@ -211,16 +212,19 @@ foreign import ccall safe mysql_field_count
 foreign import ccall safe mysql_affected_rows
     :: Ptr MYSQL -> IO CULLong
 
-foreign import ccall unsafe mysql_store_result
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_store_result" mysql_store_result
     :: Ptr MYSQL -> IO (Ptr MYSQL_RES)
 
-foreign import ccall unsafe mysql_use_result
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_use_result"  mysql_use_result
     :: Ptr MYSQL -> IO (Ptr MYSQL_RES)
 
-foreign import ccall unsafe mysql_free_result
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_free_result" mysql_free_result
     :: Ptr MYSQL_RES -> IO ()
 
-foreign import ccall unsafe mysql_fetch_fields
+foreign import ccall safe "mysql.h mysql_free_result" mysql_free_result_nonblock
+    :: Ptr MYSQL_RES -> IO ()
+
+foreign import ccall safe mysql_fetch_fields
     :: Ptr MYSQL_RES -> IO (Ptr Field)
 
 foreign import ccall safe "mysql.h mysql_fetch_fields" mysql_fetch_fields_nonblock
@@ -235,22 +239,22 @@ foreign import ccall safe mysql_row_seek
 foreign import ccall safe mysql_row_tell
     :: Ptr MYSQL_RES -> IO MYSQL_ROW_OFFSET
 
-foreign import ccall unsafe mysql_next_result
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_next_result" mysql_next_result
     :: Ptr MYSQL -> IO CInt
 
-foreign import ccall unsafe mysql_commit
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_commit" mysql_commit
     :: Ptr MYSQL -> IO MyBool
 
-foreign import ccall unsafe mysql_rollback
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_rollback" mysql_rollback
     :: Ptr MYSQL -> IO MyBool
 
-foreign import ccall unsafe mysql_fetch_row
+foreign import ccall unsafe "mysql_signals.h _hs_mysql_fetch_row" mysql_fetch_row
     :: Ptr MYSQL_RES -> IO MYSQL_ROW
 
 foreign import ccall safe "mysql.h mysql_fetch_row" mysql_fetch_row_nonblock
     :: Ptr MYSQL_RES -> IO MYSQL_ROW
 
-foreign import ccall unsafe mysql_fetch_lengths
+foreign import ccall safe mysql_fetch_lengths
     :: Ptr MYSQL_RES -> IO (Ptr CULong)
 
 foreign import ccall safe "mysql.h mysql_fetch_lengths" mysql_fetch_lengths_nonblock

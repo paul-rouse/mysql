@@ -204,6 +204,7 @@ data Result = Result {
     , resFetchFields :: Ptr MYSQL_RES -> IO (Ptr Field)
     , resFetchRow :: Ptr MYSQL_RES -> IO MYSQL_ROW
     , resFetchLengths :: Ptr MYSQL_RES -> IO (Ptr CULong)
+    , resFreeResult :: Ptr MYSQL_RES -> IO ()
     } | EmptyResult
 
 -- | A row cursor, used by 'rowSeek' and 'rowTell'.
@@ -410,6 +411,7 @@ storeResult = frobResult "storeResult" mysql_store_result
               mysql_fetch_fields_nonblock
               mysql_fetch_row_nonblock
               mysql_fetch_lengths_nonblock
+              mysql_free_result_nonblock
 
 -- | Initiate a row-by-row retrieval of a result.
 --
@@ -419,14 +421,17 @@ useResult = frobResult "useResult" mysql_use_result
             mysql_fetch_fields
             mysql_fetch_row
             mysql_fetch_lengths
+            mysql_free_result
 
 frobResult :: String
            -> (Ptr MYSQL -> IO (Ptr MYSQL_RES))
            -> (Ptr MYSQL_RES -> IO (Ptr Field))
            -> (Ptr MYSQL_RES -> IO MYSQL_ROW)
            -> (Ptr MYSQL_RES -> IO (Ptr CULong))
+           -> (Ptr MYSQL_RES -> IO ())
            -> Connection -> IO Result
-frobResult func frob fetchFieldsFunc fetchRowFunc fetchLengthsFunc conn =
+frobResult func frob fetchFieldsFunc fetchRowFunc fetchLengthsFunc
+           myFreeResult conn =
   withConn conn $ \ptr -> do
     cleanupConnResult (connResult conn)
     res <- frob ptr
@@ -437,7 +442,7 @@ frobResult func frob fetchFieldsFunc fetchRowFunc fetchLengthsFunc conn =
            then return EmptyResult
            else connectionError func conn
       else do
-        fp <- newForeignPtr res $ freeResult_ valid res
+        fp <- newForeignPtr res $ freeResult_ valid myFreeResult res
         let ret = Result {
                     resFP = fp
                   , resFields = fromIntegral fields
@@ -446,15 +451,17 @@ frobResult func frob fetchFieldsFunc fetchRowFunc fetchLengthsFunc conn =
                   , resFetchFields = fetchFieldsFunc
                   , resFetchRow = fetchRowFunc
                   , resFetchLengths = fetchLengthsFunc
+                  , resFreeResult = myFreeResult
                   }
-        weak <- mkWeakPtr ret (Just (freeResult_ valid res))
+        weak <- mkWeakPtr ret (Just (freeResult_ valid myFreeResult res))
         writeIORef (connResult conn) (Just weak)
         return ret
 
 -- | Immediately free the @MYSQL_RES@ value associated with this
 -- 'Result', and mark the @Result@ as invalid.
 freeResult :: Result -> IO ()
-freeResult Result{..}      = withForeignPtr resFP $ freeResult_ resValid
+freeResult Result{..}      = withForeignPtr resFP $
+                             freeResult_ resValid resFreeResult
 freeResult EmptyResult{..} = return ()
 
 -- | Check whether a 'Result' is still valid, i.e. backed by a live
@@ -463,10 +470,10 @@ isResultValid :: Result -> IO Bool
 isResultValid Result{..}  = readIORef resValid
 isResultValid EmptyResult = return False
 
-freeResult_ :: IORef Bool -> Ptr MYSQL_RES -> IO ()
-freeResult_ valid ptr = do
+freeResult_ :: IORef Bool -> (Ptr MYSQL_RES -> IO ()) -> Ptr MYSQL_RES -> IO ()
+freeResult_ valid free ptr = do
   wasValid <- atomicModifyIORef valid $ \prev -> (False, prev)
-  when wasValid $ mysql_free_result ptr
+  when wasValid $ free ptr
 
 fetchRow :: Result -> IO [Maybe ByteString]
 fetchRow res@Result{..}  = withRes "fetchRow" res $ \ptr -> do
