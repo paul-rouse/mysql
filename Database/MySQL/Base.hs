@@ -554,7 +554,7 @@ withMaybeString :: Maybe String -> (CString -> IO a) -> IO a
 withMaybeString Nothing act = act nullPtr
 withMaybeString (Just xs) act = withCString xs act
 
-check :: Num a => String -> Connection -> a -> IO ()
+check :: (Eq a, Num a) => String -> Connection -> a -> IO ()
 check func conn r = unless (r == 0) $ connectionError func conn
 {-# INLINE check #-}
 

@@ -1,4 +1,4 @@
-{-# LANGUAGE EmptyDataDecls, ForeignFunctionInterface #-}
+{-# LANGUAGE CPP, EmptyDataDecls, ForeignFunctionInterface #-}
 
 -- |
 -- Module:      Database.MySQL.Base.C
@@ -71,7 +71,11 @@ module Database.MySQL.Base.C
 import Data.ByteString.Unsafe (unsafeUseAsCString)
 import Database.MySQL.Base.Types
 import Foreign.C.String (CString, withCString)
+##if __GLASGOW_HASKELL__ >= 704
+import Foreign.C.Types (CChar(..), CInt(..), CUInt(..), CULLong(..), CULong(..))
+##else
 import Foreign.C.Types (CInt, CUInt, CULLong, CULong)
+##endif
 import Foreign.Marshal.Utils (with)
 import Foreign.Ptr (Ptr, nullPtr)
 
