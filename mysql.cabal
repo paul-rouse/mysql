@@ -21,7 +21,7 @@ maintainer:     Bryan O'Sullivan <bos@serpentine.com>
 copyright:      2011 MailRank, Inc.
 category:       Database
 build-type:     Custom
-cabal-version:  >= 1.6
+cabal-version:  >= 1.8
 extra-source-files:
     include/mysql_signals.h
     README.markdown
