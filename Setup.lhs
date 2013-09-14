@@ -23,7 +23,7 @@ main = defaultMainWithHooks simpleUserHooks {
 }
 
 mysqlConfigProgram = (simpleProgram "mysql_config") {
-    programFindLocation = \verbosity -> liftM2 mplus
+    programFindLocation = \verbosity _ -> liftM2 mplus
       (findProgramLocation verbosity "mysql_config")
       (findProgramLocation verbosity "mysql_config5")
   }
