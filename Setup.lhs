@@ -3,6 +3,7 @@
 \begin{code}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 {- OPTIONS_GHC -Wall #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 
 import Control.Monad (liftM2, mplus)
 import Data.List (isPrefixOf)
@@ -35,6 +36,17 @@ main = defaultMainWithHooks simpleUserHooks {
       localPkgDescr = updatePackageDescription (Just bi, []) (localPkgDescr lbi)
     }
 }
+
+-- 'ConstOrId' is a Cabal compatibility hack.
+-- see: https://github.com/scrive/hdbc-postgresql/commit/e9b2fbab07b8f55ae6a9e120ab0b98c433842a8b
+class ConstOrId a b where
+    constOrId :: a -> b
+
+instance ConstOrId a a where
+    constOrId = id
+
+instance ConstOrId a (b -> a) where
+    constOrId = const
 
 mysqlConfigProgram = (simpleProgram "mysql_config") {
     programFindLocation = \verbosity -> constOrId $ liftM2 mplus
