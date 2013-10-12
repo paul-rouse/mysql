@@ -1,4 +1,5 @@
-^(?:cabal-dev|dist)$
+^(?:cabal-dev|dist|\.cabal-sandbox)$
+^cabal.sandbox.config$
 \.(?:aux|eventlog|h[ip]|log|[oa]|orig|prof|ps|rej|swp)$
 ~$
 syntax: glob
