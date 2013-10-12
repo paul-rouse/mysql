@@ -1,5 +1,5 @@
 name:           mysql
-version:        0.1.1.4
+version:        0.1.1.5
 homepage:       https://github.com/bos/mysql
 bug-reports:    https://github.com/bos/mysql/issues
 synopsis:       A low-level MySQL client library.
@@ -18,7 +18,8 @@ license:        BSD3
 license-file:   LICENSE
 author:         Bryan O'Sullivan <bos@serpentine.com>
 maintainer:     Bryan O'Sullivan <bos@serpentine.com>
-copyright:      2011 MailRank, Inc.
+copyright:      Copyright 2011 MailRank, Inc.
+                Copyright 2013 Bryan O'Sullivan <bos@serpentine.com>
 category:       Database
 build-type:     Custom
 cabal-version:  >= 1.6
