@@ -193,7 +193,7 @@ data Connection = Connection {
       connFP :: ForeignPtr MYSQL
     , connClose :: IO ()
     , connResult :: IORef (Maybe (Weak Result))
-    }
+    } deriving (Typeable)
 
 -- | Result of a database query.
 data Result = Result {
@@ -206,9 +206,11 @@ data Result = Result {
     , resFetchLengths :: Ptr MYSQL_RES -> IO (Ptr CULong)
     , resFreeResult :: Ptr MYSQL_RES -> IO ()
     } | EmptyResult
+  deriving (Typeable)
 
 -- | A row cursor, used by 'rowSeek' and 'rowTell'.
 newtype Row = Row MYSQL_ROW_OFFSET
+  deriving (Typeable)
 
 -- | Default information for setting up a connection.
 --
