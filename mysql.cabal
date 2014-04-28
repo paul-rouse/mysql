@@ -30,6 +30,7 @@ extra-source-files:
 flag developer
   description: operate in developer mode
   default: False
+  manual: True
 
 library
   c-sources: cbits/mysql_signals.c
