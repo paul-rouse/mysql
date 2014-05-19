@@ -106,6 +106,7 @@ toType v = IntMap.findWithDefault oops (fromIntegral v) typeMap
                ((#const MYSQL_TYPE_DECIMAL), Decimal),
                ((#const MYSQL_TYPE_TINY), Tiny),
                ((#const MYSQL_TYPE_SHORT), Short),
+               ((#const MYSQL_TYPE_INT24), Int24),
                ((#const MYSQL_TYPE_LONG), Long),
                ((#const MYSQL_TYPE_FLOAT), Float),
                ((#const MYSQL_TYPE_DOUBLE), Double),
