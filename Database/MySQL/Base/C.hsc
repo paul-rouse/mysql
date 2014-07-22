@@ -25,6 +25,7 @@ module Database.MySQL.Base.C
     -- ** Connection information
     , mysql_thread_id
     , mysql_get_server_info
+    , mysql_get_server_version
     , mysql_get_host_info
     , mysql_get_proto_info
     , mysql_character_set_name
@@ -185,6 +186,9 @@ foreign import ccall unsafe "mysql_signals.h _hs_mysql_select_db" mysql_select_d
 
 foreign import ccall safe mysql_get_server_info
     :: Ptr MYSQL -> IO CString
+
+foreign import ccall safe mysql_get_server_version
+    :: Ptr MYSQL -> IO CULong
 
 foreign import ccall safe mysql_get_host_info
     :: Ptr MYSQL -> IO CString
