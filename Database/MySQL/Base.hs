@@ -462,9 +462,9 @@ frobResult func frob fetchFieldsFunc fetchRowFunc fetchLengthsFunc
 -- | Immediately free the @MYSQL_RES@ value associated with this
 -- 'Result', and mark the @Result@ as invalid.
 freeResult :: Result -> IO ()
-freeResult Result{..}      = withForeignPtr resFP $
-                             freeResult_ resValid resFreeResult
-freeResult EmptyResult{..} = return ()
+freeResult Result{..}  = withForeignPtr resFP $
+                         freeResult_ resValid resFreeResult
+freeResult EmptyResult = return ()
 
 -- | Check whether a 'Result' is still valid, i.e. backed by a live
 -- @MYSQL_RES@ value.
@@ -490,12 +490,12 @@ fetchRow res@Result{..}  = withRes "fetchRow" res $ \ptr -> do
                    memcpy d (castPtr colPtr) (fromIntegral len)
       sequence =<< zipWith go <$> peekArray resFields lenPtr
                               <*> peekArray resFields rowPtr
-fetchRow EmptyResult{..} = return []
+fetchRow EmptyResult = return []
 
 fetchFields :: Result -> IO [Field]
 fetchFields res@Result{..} = withRes "fetchFields" res $ \ptr -> do
   peekArray resFields =<< resFetchFields ptr
-fetchFields EmptyResult{..} = return []
+fetchFields EmptyResult    = return []
 
 dataSeek :: Result -> Int64 -> IO ()
 dataSeek res row = withRes "dataSeek" res $ \ptr ->
