@@ -1,5 +1,5 @@
 name:           mysql
-version:        0.1.1.6
+version:        0.1.1.7
 homepage:       https://github.com/bos/mysql
 bug-reports:    https://github.com/bos/mysql/issues
 synopsis:       A low-level MySQL client library.
