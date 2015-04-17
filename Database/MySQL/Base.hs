@@ -72,6 +72,9 @@ module Database.MySQL.Base
     -- * General information
     , clientInfo
     , clientVersion
+    -- * Concurrency
+    , initLibrary
+    , initThread
     ) where
 
 import Control.Applicative ((<$>), (<*>))
@@ -541,6 +544,30 @@ escape conn bs = withConn conn $ \ptr ->
 
 withConn :: Connection -> (Ptr MYSQL -> IO a) -> IO a
 withConn conn = withForeignPtr (connFP conn)
+
+-- | Call @mysql_library_init@
+--
+-- See <https://ro-che.info/articles/2015-04-17-safe-concurrent-mysql-haskell>
+-- for details.
+initLibrary :: IO ()
+initLibrary = do
+  r <- mysql_library_init 0 nullPtr nullPtr
+  if r == 0
+    then return ()
+    else throw $ ConnectionError "initLibrary" (-1)
+      "mysql_library_init failed"
+
+-- | Call @mysql_thread_init@
+--
+-- See <https://ro-che.info/articles/2015-04-17-safe-concurrent-mysql-haskell>
+-- for details.
+initThread :: IO ()
+initThread = do
+  r <- mysql_thread_init
+  if r == 0
+    then return ()
+    else throw $ ConnectionError "initThread" (-1)
+      "mysql_thread_init failed"
 
 withRes :: String -> Result -> (Ptr MYSQL_RES -> IO a) -> IO a
 withRes func res act = do

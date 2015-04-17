@@ -63,6 +63,9 @@ module Database.MySQL.Base.C
     -- * Error handling
     , mysql_errno
     , mysql_error
+    -- * Concurrency
+    , mysql_library_init
+    , mysql_thread_init
     ) where
 
 #include "mysql_signals.h"
@@ -276,3 +279,9 @@ foreign import ccall safe mysql_errno
 
 foreign import ccall safe mysql_error
     :: Ptr MYSQL -> IO CString
+
+foreign import ccall safe "mysql.h mysql_server_init" mysql_library_init
+    :: CInt -> Ptr (Ptr Char) -> Ptr (Ptr Char) -> IO CInt
+
+foreign import ccall safe "mysql.h" mysql_thread_init
+    :: IO MyBool
