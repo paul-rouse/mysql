@@ -4,7 +4,7 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 {- OPTIONS_GHC -Wall #-}
 
-import Control.Monad (liftM2, mplus)
+import Control.Monad (liftM, msum, sequence)
 import Data.List (isPrefixOf)
 import Distribution.PackageDescription
 import Distribution.Simple
@@ -37,9 +37,11 @@ main = defaultMainWithHooks simpleUserHooks {
 }
 
 mysqlConfigProgram = (simpleProgram "mysql_config") {
-    programFindLocation = \verbosity -> constOrId $ liftM2 mplus
-      (findProgramLocation verbosity "mysql_config")
-      (findProgramLocation verbosity "mysql_config5")
+    programFindLocation = \verbosity -> constOrId $ liftM msum $ sequence
+      [ (findProgramLocation verbosity "mysql_config")
+      , (findProgramLocation verbosity "mysql5_config")
+      , (findProgramLocation verbosity "mariadb_config")
+      ]
   }
 
 mysqlBuildInfo :: LocalBuildInfo -> IO BuildInfo
