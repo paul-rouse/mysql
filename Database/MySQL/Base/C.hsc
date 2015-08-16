@@ -68,6 +68,7 @@ module Database.MySQL.Base.C
 #include "mysql_signals.h"
 #include "mysql.h"
 
+import Data.ByteString (useAsCString)
 import Data.ByteString.Unsafe (unsafeUseAsCString)
 import Database.MySQL.Base.Types
 import Foreign.C.String (CString, withCString)
@@ -93,7 +94,7 @@ mysql_options ptr opt =
       NamedPipe ->
         go (#const MYSQL_OPT_NAMED_PIPE) nullPtr
       InitCommand cmd ->
-        unsafeUseAsCString cmd $ go (#const MYSQL_INIT_COMMAND)
+        useAsCString cmd $ go (#const MYSQL_INIT_COMMAND)
       ReadDefaultFile path ->
         withCString path $ go (#const MYSQL_READ_DEFAULT_FILE)
       ReadDefaultGroup group ->
