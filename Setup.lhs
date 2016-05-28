@@ -38,8 +38,8 @@ main = defaultMainWithHooks simpleUserHooks {
 
 mysqlConfigProgram = (simpleProgram "mysql_config") {
     programFindLocation = \verbosity -> constOrId $ liftM2 mplus
-      (findProgramLocation verbosity "mysql_config")
-      (findProgramLocation verbosity "mysql_config5")
+      (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mysql_config")
+      (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mysql_config5")
   }
 
 mysqlBuildInfo :: LocalBuildInfo -> IO BuildInfo
