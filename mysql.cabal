@@ -3,7 +3,7 @@ version:        0.1.1.8
 homepage:       https://github.com/bos/mysql
 bug-reports:    https://github.com/bos/mysql/issues
 synopsis:       A low-level MySQL client library.
-description:    
+description:
     A low-level client library for the MySQL database, implemented as
     bindings to the C @mysqlclient@ API.
     .
@@ -26,6 +26,10 @@ cabal-version:  >= 1.6
 extra-source-files:
     include/mysql_signals.h
     README.markdown
+
+
+custom-setup
+  setup-depends: base, Cabal
 
 flag developer
   description: operate in developer mode
