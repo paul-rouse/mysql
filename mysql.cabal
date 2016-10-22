@@ -25,6 +25,7 @@ build-type:     Custom
 cabal-version:  >= 1.8
 extra-source-files:
     include/mysql_signals.h
+    ChangeLog.md
     README.markdown
 
 
