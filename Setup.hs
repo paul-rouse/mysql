@@ -4,8 +4,8 @@
 {-# LANGUAGE CPP                   #-}
 {- OPTIONS_GHC -Wall #-}
 
-#ifndef MIN_Version_Cabal
-#define MIN_Version_Cabal(x,y,z) 0 
+#ifndef MIN_VERSION_Cabal
+#define MIN_VERSION_Cabal(x,y,z) 0 
 #endif
 
 import Control.Monad (liftM2, mplus)
