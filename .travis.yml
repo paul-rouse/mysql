@@ -39,10 +39,17 @@ before_install:
 # stack
 - mkdir -p ~/.local/bin
 - export PATH=$HOME/.local/bin:$PATH
-- travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+- if [ `uname` = "Darwin" ];
+  then
+    travis_retry curl --insecure -L https://www.stackage.org/stack/osx-x86_64 | tar xz --strip-components=1 --include '*/stack' -C ~/.local/bin;
+  else
+    travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack';
+  fi
 
-# We could set up the database here, but the present test doesn't need anything
-#before_script:
+before_script:
+- mysql -u root -e "create database IF NOT EXISTS test;"
+- mysql -u root -e "create user 'test'@'127.0.0.1';"
+- mysql -u root -e "grant usage on test.* to 'test'@'127.0.0.1';"
 
 script:
 - stack init $ARGS
