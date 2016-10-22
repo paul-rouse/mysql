@@ -22,15 +22,13 @@ matrix:
     compiler: ": # lts-2"
   - env: ARGS="--resolver lts-6"
     compiler: ": # lts-6"
+  - env: ARGS="--resolver lts-7"
+    compiler: ": # lts-7"
   - env: ARGS="--resolver nightly"
     compiler: ": # nightly"
-  - env: ARGS="--resolver lts-6"
-    compiler: ": # lts-6 osx"
+  - env: ARGS="--resolver lts"
+    compiler: ": # lts osx"
     os: osx
-  allow_failures:
-  # Will fail on GHC 8 until updated, and let's see about osx
-  - env: ARGS="--resolver nightly"
-  - os: osx
 
 before_install:
 # Using compiler above sets CC to an invalid value, so unset it
