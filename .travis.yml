@@ -49,7 +49,7 @@ before_install:
 before_script:
 - mysql -u root -e "create database IF NOT EXISTS test;"
 - mysql -u root -e "create user 'test'@'127.0.0.1';"
-- mysql -u root -e "grant usage on test.* to 'test'@'127.0.0.1';"
+- mysql -u root -e "grant select on test.* to 'test'@'127.0.0.1';"
 
 script:
 - stack init $ARGS
