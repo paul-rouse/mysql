@@ -22,7 +22,7 @@ copyright:      Copyright 2011 MailRank, Inc.
                 Copyright 2013 Bryan O'Sullivan <bos@serpentine.com>
 category:       Database
 build-type:     Custom
-cabal-version:  >= 1.6
+cabal-version:  >= 1.8
 extra-source-files:
     include/mysql_signals.h
     README.markdown
@@ -54,6 +54,16 @@ library
     ghc-prof-options: -auto-all
     ghc-options: -Werror
     cpp-options: -DASSERTS
+
+test-suite test
+    type:            exitcode-stdio-1.0
+    main-is:         main.hs
+    hs-source-dirs:  test
+    ghc-options:     -Wall
+    build-depends:   base                    >= 4 && < 5
+                   , bytestring
+                   , hspec
+                   , mysql
 
 source-repository head
   type:     git
