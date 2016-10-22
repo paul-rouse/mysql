@@ -1,7 +1,7 @@
 #!/usr/bin/env runhaskell
 
 \begin{code}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, CPP #-}
 {- OPTIONS_GHC -Wall #-}
 
 import Control.Monad (liftM2, mplus)
@@ -38,8 +38,13 @@ main = defaultMainWithHooks simpleUserHooks {
 
 mysqlConfigProgram = (simpleProgram "mysql_config") {
     programFindLocation = \verbosity -> constOrId $ liftM2 mplus
+#if __GLASGOW_HASKELL__ < 800
       (findProgramLocation verbosity "mysql_config")
       (findProgramLocation verbosity "mysql_config5")
+#else
+      (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mysql_config")
+      (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mysql_config5")
+#endif
   }
 
 mysqlBuildInfo :: LocalBuildInfo -> IO BuildInfo
