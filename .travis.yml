@@ -33,21 +33,21 @@ matrix:
   - os: osx
 
 before_install:
-  # Using compiler above sets CC to an invalid value, so unset it
-  - unset CC
+# Using compiler above sets CC to an invalid value, so unset it
+- unset CC
 
-  # stack
-  - mkdir -p ~/.local/bin
-  - export PATH=$HOME/.local/bin:$PATH
-  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+# stack
+- mkdir -p ~/.local/bin
+- export PATH=$HOME/.local/bin:$PATH
+- travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
 
 # We could set up the database here, but the present test doesn't need anything
 #before_script:
 
 script:
-  - stack init $ARGS
-  - stack build --test --bench --install-ghc --haddock --no-haddock-deps
+- stack init $ARGS
+- stack build --test --bench --install-ghc --haddock --no-haddock-deps
 
 cache:
   directories:
-- $HOME/.stack
+  - $HOME/.stack
