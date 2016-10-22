@@ -46,6 +46,13 @@ before_install:
     travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack';
   fi
 
+# OSX seems to need mysql installed
+- if [ `uname` = "Darwin" ];
+  then
+    brew install mysql;
+    mysql.server start;
+  fi
+
 before_script:
 - mysql -u root -e "create database IF NOT EXISTS test;"
 - mysql -u root -e "create user 'test'@'127.0.0.1';"
