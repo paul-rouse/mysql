@@ -1,8 +1,12 @@
-#!/usr/bin/env runhaskell
 
-\begin{code}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE CPP                   #-}
 {- OPTIONS_GHC -Wall #-}
+
+#ifndef MIN_Version_Cabal
+#define MIN_Version_Cabal(x,y,z) 0 
+#endif
 
 import Control.Monad (liftM2, mplus)
 import Data.List (isPrefixOf)
@@ -38,8 +42,13 @@ main = defaultMainWithHooks simpleUserHooks {
 
 mysqlConfigProgram = (simpleProgram "mysql_config") {
     programFindLocation = \verbosity -> constOrId $ liftM2 mplus
+#if MIN_VERSION_Cabal(1,24,0)
+      (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mysql_config")
+      (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mysql_config5")
+#else
       (findProgramLocation verbosity "mysql_config")
       (findProgramLocation verbosity "mysql_config5")
+#endif
   }
 
 mysqlBuildInfo :: LocalBuildInfo -> IO BuildInfo
@@ -56,4 +65,3 @@ mysqlBuildInfo lbi = do
                 filter (/= "-lmygcc") $ libs
   , includeDirs = map (drop 2) include
   }
-\end{code}
