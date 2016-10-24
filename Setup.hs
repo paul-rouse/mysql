@@ -9,7 +9,7 @@
 #endif
 
 import Control.Monad (liftM, msum, sequence)
-import Data.List (isPrefixOf)
+import Data.List (isPrefixOf, nub)
 import Distribution.PackageDescription
 import Distribution.Simple
 import Distribution.Simple.LocalBuildInfo
@@ -62,10 +62,13 @@ mysqlBuildInfo lbi = do
 
   include <- mysqlConfig ["--include"]
   libs <- mysqlConfig ["--libs"]
+  libsR <- mysqlConfig ["--libs_r"]
 
   return emptyBuildInfo {
     extraLibDirs = map (drop 2) . filter ("-L" `isPrefixOf`) $ libs
   , extraLibs = map (drop 2) . filter ("-l" `isPrefixOf`) .
-                filter (/= "-lmygcc") $ libs
+                filter (/= "-lmygcc") $
+                filter (/= "-lmysqlclient_r") $
+                nub (libs ++ libsR)
   , includeDirs = map (drop 2) include
   }
