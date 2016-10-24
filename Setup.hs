@@ -8,7 +8,7 @@
 #define MIN_VERSION_Cabal(x,y,z) 0 
 #endif
 
-import Control.Monad (liftM2, mplus)
+import Control.Monad (liftM, msum, sequence)
 import Data.List (isPrefixOf)
 import Distribution.PackageDescription
 import Distribution.Simple
@@ -41,13 +41,17 @@ main = defaultMainWithHooks simpleUserHooks {
 }
 
 mysqlConfigProgram = (simpleProgram "mysql_config") {
-    programFindLocation = \verbosity -> constOrId $ liftM2 mplus
+    programFindLocation = \verbosity -> constOrId $ liftM msum $ sequence
 #if MIN_VERSION_Cabal(1,24,0)
-      (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mysql_config")
-      (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mysql_config5")
+      [ (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mysql_config")
+      , (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mysql_config5")
+      , (findProgramOnSearchPath verbosity [ProgramSearchPathDefault] "mariadb_config")
+      ]
 #else
-      (findProgramLocation verbosity "mysql_config")
-      (findProgramLocation verbosity "mysql_config5")
+      [ (findProgramLocation verbosity "mysql_config")
+      , (findProgramLocation verbosity "mysql_config5")
+      , (findProgramLocation verbosity "mariadb_config")
+      ]
 #endif
   }
 
