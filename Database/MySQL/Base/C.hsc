@@ -69,7 +69,6 @@ module Database.MySQL.Base.C
 #include "mysql.h"
 
 import Data.ByteString (useAsCString)
-import Data.ByteString.Unsafe (unsafeUseAsCString)
 import Database.MySQL.Base.Types
 import Foreign.C.String (CString, withCString)
 ##if __GLASGOW_HASKELL__ >= 704
@@ -98,7 +97,7 @@ mysql_options ptr opt =
       ReadDefaultFile path ->
         withCString path $ go (#const MYSQL_READ_DEFAULT_FILE)
       ReadDefaultGroup group ->
-        unsafeUseAsCString group $ go (#const MYSQL_READ_DEFAULT_GROUP)
+        useAsCString group $ go (#const MYSQL_READ_DEFAULT_GROUP)
       CharsetDir path ->
         withCString path $ go (#const MYSQL_SET_CHARSET_DIR)
       CharsetName cs ->
@@ -108,7 +107,7 @@ mysql_options ptr opt =
       Protocol proto ->
         withIntegral (fromEnum proto) $ go (#const MYSQL_OPT_PROTOCOL)
       SharedMemoryBaseName name ->
-        unsafeUseAsCString name $ go (#const MYSQL_SHARED_MEMORY_BASE_NAME)
+        useAsCString name $ go (#const MYSQL_SHARED_MEMORY_BASE_NAME)
       ReadTimeout secs ->
         withIntegral secs $ go (#const MYSQL_OPT_READ_TIMEOUT)
       WriteTimeout secs ->
@@ -120,7 +119,7 @@ mysql_options ptr opt =
       GuessConnection ->
         go (#const MYSQL_OPT_GUESS_CONNECTION) nullPtr
       ClientIP ip ->
-        unsafeUseAsCString ip $ go (#const MYSQL_SET_CLIENT_IP)
+        useAsCString ip $ go (#const MYSQL_SET_CLIENT_IP)
       SecureAuth b ->
         withBool b $ go (#const MYSQL_SECURE_AUTH)
       ReportDataTruncation b ->
