@@ -1,3 +1,7 @@
+## 0.1.2.1
+
+* Fix bystestring-valued connectOptions sometimes not being null terminated at the correct place (avoid unsafeUseAsCString).
+
 ## 0.1.2
 
 * Fix setup for cabal 1.24
