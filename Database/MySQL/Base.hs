@@ -179,6 +179,13 @@ data SSLInfo = SSLInfo {
     , sslCiphers :: String -- ^ Comma-separated list of cipher names.
     } deriving (Eq, Read, Show, Typeable)
 
+-- | The constructors of @MySQLError@ are not currently exported, but they
+--   have a consistent set of field names which are exported.  These fields are:
+--
+--   >  errFunction :: String
+--   >  errNumber   :: Int
+--   >  errMessage  :: String
+--
 data MySQLError = ConnectionError {
       errFunction :: String
     , errNumber :: Int
