@@ -1,3 +1,9 @@
+## 0.1.3
+
+* Safer concurrency - see https://ro-che.info/articles/2015-04-17-safe-concurrent-mysql-haskell
+* Better support for building against MariaDB (not well tested).
+* Additional C binding: mysql_get_server_version().
+
 ## 0.1.2.1
 
 * Fix bystestring-valued connectOptions sometimes not being null terminated at the correct place (avoid unsafeUseAsCString).
