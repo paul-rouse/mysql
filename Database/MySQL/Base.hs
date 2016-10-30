@@ -10,6 +10,12 @@
 --
 -- A low-level client library for the MySQL database, implemented as
 -- bindings to the C @mysqlclient@ API.
+--
+-- The C library is thread-safe, but uses thread-local state.  Therefore,
+-- if these bindings are used in a multi-threaded program, "bound" threads
+-- should be used (see "Control.Concurrent").  In addition, explicit calls
+-- to 'initLibrary', and possibly 'initThread' and 'endThread' may be needed
+-- in a multi-threaded program.
 
 module Database.MySQL.Base
     (
@@ -555,7 +561,12 @@ withConn conn = withForeignPtr (connFP conn)
 
 -- | Call @mysql_library_init@
 --
+-- A single-threaded program can rely on an implicit initialisation done
+-- when making the first connection, but a multi-threaded one should call
+-- 'initLibrary' separately, and it should be done before other threads
+-- might call into this library, since this function is not thread-safe.
 -- See <https://ro-che.info/articles/2015-04-17-safe-concurrent-mysql-haskell>
+-- and <https://dev.mysql.com/doc/refman/5.7/en/c-api-threaded-clients.html>
 -- for details.
 initLibrary :: IO ()
 initLibrary = do
@@ -567,7 +578,13 @@ initLibrary = do
 
 -- | Call @mysql_thread_init@
 --
+-- Again a single-threaded program does not need to call this explicitly.  Even
+-- in a multi-threaded one, if each connection is made, used, and destroyed
+-- in a single thread, it is sufficient to rely on the 'connect' call to do
+-- an implicit thread initialisation.  But in other cases, for example when
+-- using a connection pool, each thread requires explicit initialisation.
 -- See <https://ro-che.info/articles/2015-04-17-safe-concurrent-mysql-haskell>
+-- and <https://dev.mysql.com/doc/refman/5.7/en/c-api-threaded-clients.html>
 -- for details.
 initThread :: IO ()
 initThread = do
@@ -582,11 +599,12 @@ initThread = do
 -- This is needed at thread exit to avoid a memory leak, except when using
 -- a non-debug build of at least version 5.7.9 of the MySQL library.
 -- See <https://dev.mysql.com/doc/refman/5.7/en/mysql-thread-end.html>.
--- However, the threads in question are the /OS threads/, so calling this
--- function is unlikely to be important except when using large numbers of
--- bound threads (see "Control.Concurrent").  Haskell threads - those created
--- with 'forkIO' and friends - share a small number of OS threads, so in those
--- it is hard to call this function safely, and little benefit in doing so (see
+-- The threads in question are the /OS threads/, so calling this function
+-- is likely to be important when using large numbers of bound threads (see
+-- "Control.Concurrent").  Unbound threads - those created with 'forkIO' and
+-- friends - share a small number of OS threads, so in those it is hard to
+-- call this function safely, and there is little benefit in doing so, but in
+-- any case using this library in unbound threads is not recommended  (see
 -- <https://ro-che.info/articles/2015-04-17-safe-concurrent-mysql-haskell>).
 endThread :: IO ()
 endThread = mysql_thread_end
