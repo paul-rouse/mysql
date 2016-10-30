@@ -1,3 +1,7 @@
+## 0.1.4
+
+* Expose mysql_thread_end() as `endThread`
+
 ## 0.1.3
 
 * Safer concurrency - see https://ro-che.info/articles/2015-04-17-safe-concurrent-mysql-haskell
