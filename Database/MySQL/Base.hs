@@ -75,6 +75,7 @@ module Database.MySQL.Base
     -- * Concurrency
     , initLibrary
     , initThread
+    , endThread
     ) where
 
 import Control.Applicative ((<$>), (<*>))
@@ -575,6 +576,20 @@ initThread = do
     then return ()
     else throw $ ConnectionError "initThread" (-1)
       "mysql_thread_init failed"
+
+-- | Call @mysql_thread_end@
+--
+-- This is needed at thread exit to avoid a memory leak, except when using
+-- a non-debug build of at least version 5.7.9 of the MySQL library.
+-- See <https://dev.mysql.com/doc/refman/5.7/en/mysql-thread-end.html>.
+-- However, the threads in question are the /OS threads/, so calling this
+-- function is unlikely to be important except when using large numbers of
+-- bound threads (see "Control.Concurrent").  Haskell threads - those created
+-- with 'forkIO' and friends - share a small number of OS threads, so in those
+-- it is hard to call this function safely, and little benefit in doing so (see
+-- <https://ro-che.info/articles/2015-04-17-safe-concurrent-mysql-haskell>).
+endThread :: IO ()
+endThread = mysql_thread_end
 
 withRes :: String -> Result -> (Ptr MYSQL_RES -> IO a) -> IO a
 withRes func res act = do

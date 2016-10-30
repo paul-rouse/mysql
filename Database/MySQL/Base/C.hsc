@@ -67,6 +67,7 @@ module Database.MySQL.Base.C
     -- * Concurrency
     , mysql_library_init
     , mysql_thread_init
+    , mysql_thread_end
     ) where
 
 #include "mysql_signals.h"
@@ -289,3 +290,6 @@ foreign import ccall safe "mysql.h mysql_server_init" mysql_library_init
 
 foreign import ccall safe "mysql.h" mysql_thread_init
     :: IO MyBool
+
+foreign import ccall safe "mysql.h" mysql_thread_end
+    :: IO ()
