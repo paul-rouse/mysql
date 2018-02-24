@@ -54,6 +54,7 @@ import Data.ByteString.Internal (create, memcpy)
 import Data.List (intercalate)
 import Data.Maybe (catMaybes)
 import Data.Monoid (Monoid(..))
+import Data.Semigroup (Semigroup(..))
 import Data.Typeable (Typeable)
 import Data.Word (Word, Word8)
 import Foreign.C.Types (CChar, CInt, CUInt, CULong)
@@ -171,10 +172,14 @@ instance Show FieldFlags where
 
 type FieldFlag = FieldFlags
 
+instance Semigroup FieldFlags where
+    (<>) (FieldFlags a) (FieldFlags b) = FieldFlags (a .|. b)
+    {-# INLINE (<>) #-}
+
 instance Monoid FieldFlags where
     mempty = FieldFlags 0
     {-# INLINE mempty #-}
-    mappend (FieldFlags a) (FieldFlags b) = FieldFlags (a .|. b)
+    mappend = (<>)
     {-# INLINE mappend #-}
 
 flagNotNull, flagPrimaryKey, flagUniqueKey, flagMultipleKey :: FieldFlag
