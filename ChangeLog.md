@@ -1,3 +1,9 @@
+## 0.1.5
+
+* Add Semigroup instance for FieldFlags
+* Fix some warnings
+* Drop testing under GHC 7.8 / lts-2
+
 ## 0.1.4
 
 * Expose mysql_thread_end() as `endThread`
