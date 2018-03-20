@@ -234,6 +234,7 @@ instance Storable Field where
     sizeOf _    = #{size MYSQL_FIELD}
     alignment _ = alignment (undefined :: Ptr CChar)
     peek = peekField
+    poke _ _ = return ()   -- Unused, but define it to avoid a warning
 
 type Seconds = Word
 

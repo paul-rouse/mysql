@@ -57,8 +57,13 @@ mysqlConfigProgram = (simpleProgram "mysql_config") {
 
 mysqlBuildInfo :: LocalBuildInfo -> IO BuildInfo
 mysqlBuildInfo lbi = do
+#if MIN_VERSION_Cabal(2,0,0)
+  let mysqlConfig = fmap words . getDbProgramOutput normal
+                    mysqlConfigProgram (withPrograms lbi)
+#else
   let mysqlConfig = fmap words . rawSystemProgramStdoutConf normal
                     mysqlConfigProgram (withPrograms lbi)
+#endif
 
   include <- mysqlConfig ["--include"]
   libs <- mysqlConfig ["--libs"]
