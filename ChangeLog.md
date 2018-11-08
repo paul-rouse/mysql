@@ -1,3 +1,7 @@
+## 0.1.6
+
+* Fix build for mysql 8
+
 ## 0.1.5
 
 * Add Semigroup instance for FieldFlags
