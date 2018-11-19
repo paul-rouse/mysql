@@ -259,14 +259,20 @@ data Option =
             | SharedMemoryBaseName ByteString
             | ReadTimeout Seconds
             | WriteTimeout Seconds
+#if !defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 80000
+#else
             | UseRemoteConnection
             | UseEmbeddedConnection
             | GuessConnection
             | ClientIP ByteString
+#endif
             | SecureAuth Bool
             | ReportDataTruncation Bool
             | Reconnect Bool
+#if !defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 80000
+#else
             | SSLVerifyServerCert Bool
+#endif
             -- Flags accepted by mysql_real_connect.
             | FoundRows
             | IgnoreSIGPIPE

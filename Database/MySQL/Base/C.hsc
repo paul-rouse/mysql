@@ -117,6 +117,8 @@ mysql_options ptr opt =
         withIntegral secs $ go (#const MYSQL_OPT_READ_TIMEOUT)
       WriteTimeout secs ->
         withIntegral secs $ go (#const MYSQL_OPT_WRITE_TIMEOUT)
+#if !defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 80000
+#else
       UseRemoteConnection ->
         go (#const MYSQL_OPT_USE_REMOTE_CONNECTION) nullPtr
       UseEmbeddedConnection ->
@@ -127,12 +129,16 @@ mysql_options ptr opt =
         useAsCString ip $ go (#const MYSQL_SET_CLIENT_IP)
       SecureAuth b ->
         withBool b $ go (#const MYSQL_SECURE_AUTH)
+#endif
       ReportDataTruncation b ->
         withBool b $ go (#const MYSQL_REPORT_DATA_TRUNCATION)
       Reconnect b ->
         withBool b $ go (#const MYSQL_OPT_RECONNECT)
+#if !defined(MARIADB_BASE_VERSION) && MYSQL_VERSION_ID >= 80000
+#else
       SSLVerifyServerCert b ->
         withBool b $ go (#const MYSQL_OPT_SSL_VERIFY_SERVER_CERT)
+#endif
       -- Other options are accepted by mysql_real_connect, so ignore them.
       _ -> return 0
   where
