@@ -1,3 +1,7 @@
+## 0.1.7
+
+* Add support for JSON type
+
 ## 0.1.6
 
 * Fix build for mysql 8
