@@ -97,41 +97,45 @@ data Type = Decimal
           | VarString
           | String
           | Geometry
+          | Json
             deriving (Enum, Eq, Show, Typeable)
 
 toType :: CInt -> Type
 toType v = IntMap.findWithDefault oops (fromIntegral v) typeMap
   where
     oops = error $ "Database.MySQL: unknown field type " ++ show v
-    typeMap = IntMap.fromList [
-               ((#const MYSQL_TYPE_DECIMAL), Decimal),
-               ((#const MYSQL_TYPE_TINY), Tiny),
-               ((#const MYSQL_TYPE_SHORT), Short),
-               ((#const MYSQL_TYPE_INT24), Int24),
-               ((#const MYSQL_TYPE_LONG), Long),
-               ((#const MYSQL_TYPE_FLOAT), Float),
-               ((#const MYSQL_TYPE_DOUBLE), Double),
-               ((#const MYSQL_TYPE_NULL), Null),
-               ((#const MYSQL_TYPE_TIMESTAMP), Timestamp),
-               ((#const MYSQL_TYPE_LONGLONG), LongLong),
-               ((#const MYSQL_TYPE_DATE), Date),
-               ((#const MYSQL_TYPE_TIME), Time),
-               ((#const MYSQL_TYPE_DATETIME), DateTime),
-               ((#const MYSQL_TYPE_YEAR), Year),
-               ((#const MYSQL_TYPE_NEWDATE), NewDate),
-               ((#const MYSQL_TYPE_VARCHAR), VarChar),
-               ((#const MYSQL_TYPE_BIT), Bit),
-               ((#const MYSQL_TYPE_NEWDECIMAL), NewDecimal),
-               ((#const MYSQL_TYPE_ENUM), Enum),
-               ((#const MYSQL_TYPE_SET), Set),
-               ((#const MYSQL_TYPE_TINY_BLOB), TinyBlob),
-               ((#const MYSQL_TYPE_MEDIUM_BLOB), MediumBlob),
-               ((#const MYSQL_TYPE_LONG_BLOB), LongBlob),
-               ((#const MYSQL_TYPE_BLOB), Blob),
-               ((#const MYSQL_TYPE_VAR_STRING), VarString),
-               ((#const MYSQL_TYPE_STRING), String),
-               ((#const MYSQL_TYPE_GEOMETRY), Geometry)
-              ]
+    typeMap = IntMap.fromList
+      [ ((#const MYSQL_TYPE_DECIMAL), Decimal)
+      , ((#const MYSQL_TYPE_TINY), Tiny)
+      , ((#const MYSQL_TYPE_SHORT), Short)
+      , ((#const MYSQL_TYPE_INT24), Int24)
+      , ((#const MYSQL_TYPE_LONG), Long)
+      , ((#const MYSQL_TYPE_FLOAT), Float)
+      , ((#const MYSQL_TYPE_DOUBLE), Double)
+      , ((#const MYSQL_TYPE_NULL), Null)
+      , ((#const MYSQL_TYPE_TIMESTAMP), Timestamp)
+      , ((#const MYSQL_TYPE_LONGLONG), LongLong)
+      , ((#const MYSQL_TYPE_DATE), Date)
+      , ((#const MYSQL_TYPE_TIME), Time)
+      , ((#const MYSQL_TYPE_DATETIME), DateTime)
+      , ((#const MYSQL_TYPE_YEAR), Year)
+      , ((#const MYSQL_TYPE_NEWDATE), NewDate)
+      , ((#const MYSQL_TYPE_VARCHAR), VarChar)
+      , ((#const MYSQL_TYPE_BIT), Bit)
+      , ((#const MYSQL_TYPE_NEWDECIMAL), NewDecimal)
+      , ((#const MYSQL_TYPE_ENUM), Enum)
+      , ((#const MYSQL_TYPE_SET), Set)
+      , ((#const MYSQL_TYPE_TINY_BLOB), TinyBlob)
+      , ((#const MYSQL_TYPE_MEDIUM_BLOB), MediumBlob)
+      , ((#const MYSQL_TYPE_LONG_BLOB), LongBlob)
+      , ((#const MYSQL_TYPE_BLOB), Blob)
+      , ((#const MYSQL_TYPE_VAR_STRING), VarString)
+      , ((#const MYSQL_TYPE_STRING), String)
+      , ((#const MYSQL_TYPE_GEOMETRY), Geometry)
+#if defined(MYSQL_TYPE_JSON)
+      , ((#const MYSQL_TYPE_JSON), Json)
+#endif
+      ]
 
 -- | A description of a field (column) of a table.
 data Field = Field {
