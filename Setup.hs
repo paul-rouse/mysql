@@ -8,6 +8,7 @@
 #define MIN_VERSION_Cabal(x,y,z) 0 
 #endif
 
+import Control.Exception (IOException, catch)
 import Control.Monad (liftM, msum, sequence)
 import Data.List (isPrefixOf, nub)
 import Distribution.PackageDescription
@@ -68,12 +69,18 @@ mysqlBuildInfo lbi = do
   include <- mysqlConfig ["--include"]
   libs <- mysqlConfig ["--libs"]
   libsR <- mysqlConfig ["--libs_r"]
+  libsSys <- mysqlConfig ["--libs_sys"] `catch` libsFromError
 
   return emptyBuildInfo {
-    extraLibDirs = map (drop 2) . filter ("-L" `isPrefixOf`) $ libs
+    extraLibDirs = map (drop 2) . filter ("-L" `isPrefixOf`) $
+                   nub (libsSys ++ libs)
   , extraLibs = map (drop 2) . filter ("-l" `isPrefixOf`) .
                 filter (/= "-lmygcc") $
                 filter (/= "-lmysqlclient_r") $
-                nub (libs ++ libsR)
+                nub (libsSys ++ libs ++ libsR)
   , includeDirs = map (drop 2) include
   }
+  where
+    -- Recover from an error by returning an empty list.
+    libsFromError :: IOException -> IO [String]
+    libsFromError _ = return []
