@@ -1,3 +1,7 @@
+## 0.1.7.2
+
+* Update .cabal file
+
 ## 0.1.7.1
 
 * Use `mysql_config --libs-sys` in Setup.hs if available (#40)

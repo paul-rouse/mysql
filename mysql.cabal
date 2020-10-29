@@ -1,5 +1,5 @@
 name:           mysql
-version:        0.1.7.1
+version:        0.1.7.2
 homepage:       https://github.com/paul-rouse/mysql
 bug-reports:    https://github.com/paul-rouse/mysql/issues
 synopsis:       A low-level MySQL client library.
@@ -22,7 +22,7 @@ copyright:      Copyright 2011 MailRank, Inc.
                 Copyright 2013 Bryan O'Sullivan <bos@serpentine.com>
 category:       Database
 build-type:     Custom
-cabal-version:  >= 1.8
+cabal-version:  >= 1.10
 extra-source-files:
     include/mysql_signals.h
     ChangeLog.md
@@ -62,12 +62,14 @@ library
     ghc-prof-options: -auto-all
     ghc-options: -Werror
     cpp-options: -DASSERTS
+  default-language:  Haskell2010
 
 test-suite test
     type:            exitcode-stdio-1.0
     main-is:         main.hs
     hs-source-dirs:  test
     ghc-options:     -Wall
+    default-language: Haskell2010
     build-depends:   base                    >= 4 && < 5
                    , bytestring
                    , hspec
