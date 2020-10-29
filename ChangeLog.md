@@ -1,3 +1,7 @@
+## 0.1.7.1
+
+* Use `mysql_config --libs-sys` in Setup.hs if available (#40)
+
 ## 0.1.7
 
 * Add support for JSON type
