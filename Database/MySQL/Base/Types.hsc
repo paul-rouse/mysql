@@ -145,7 +145,6 @@ data Field = Field {
     , fieldOrigTable :: ByteString -- ^ Original table name, if table was an alias.
     , fieldDB :: ByteString        -- ^ Database for table.
     , fieldCatalog :: ByteString   -- ^ Catalog for table.
-    , fieldDefault :: Maybe ByteString   -- ^ Default value.
     , fieldLength :: Word          -- ^ Width of column (create length).
     , fieldMaxLength :: Word    -- ^ Maximum width for selected set.
     , fieldFlags :: FieldFlags        -- ^ Div flags.
@@ -216,9 +215,6 @@ peekField ptr = do
    <*> peekS ((#peek MYSQL_FIELD, org_table)) ((#peek MYSQL_FIELD, org_table_length))
    <*> peekS ((#peek MYSQL_FIELD, db)) ((#peek MYSQL_FIELD, db_length))
    <*> peekS ((#peek MYSQL_FIELD, catalog)) ((#peek MYSQL_FIELD, catalog_length))
-   <*> (if flags `hasAllFlags` flagNoDefaultValue
-       then pure Nothing
-       else Just <$> peekS ((#peek MYSQL_FIELD, def)) ((#peek MYSQL_FIELD, def_length)))
    <*> (uint <$> (#peek MYSQL_FIELD, length) ptr)
    <*> (uint <$> (#peek MYSQL_FIELD, max_length) ptr)
    <*> pure flags
