@@ -1,3 +1,7 @@
+## 0.1.7.3
+
+* Fix error on certain systems introduced by the change in (#40): some implementations of `mysql_config` do not recognise `--libs-sys`, yet return a zero status for attempts to use it.
+
 ## 0.1.7.2
 
 * Update .cabal file

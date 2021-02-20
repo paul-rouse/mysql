@@ -10,7 +10,7 @@
 
 import Control.Exception (IOException, catch)
 import Control.Monad (liftM, msum, sequence)
-import Data.List (isPrefixOf, nub)
+import Data.List (isPrefixOf, isInfixOf, nub)
 import Distribution.PackageDescription
 import Distribution.Simple
 import Distribution.Simple.LocalBuildInfo
@@ -69,7 +69,14 @@ mysqlBuildInfo lbi = do
   include <- mysqlConfig ["--include"]
   libs <- mysqlConfig ["--libs"]
   libsR <- mysqlConfig ["--libs_r"]
-  libsSys <- mysqlConfig ["--libs_sys"] `catch` libsFromError
+  libsSys' <- mysqlConfig ["--libs_sys"] `catch` libsFromError
+
+  -- On some systems, `mysql_config` fails to give an error status even though
+  -- it cannot handle `--libs_sys`.  The "Usage:" message lists libraries we do
+  -- do not want to include, so recognise it for what it is!
+  --
+  let libsSys = if null $ filter ("Usage:" `isInfixOf`) libsSys' then libsSys'
+                else []
 
   return emptyBuildInfo {
     extraLibDirs = map (drop 2) . filter ("-L" `isPrefixOf`) $
