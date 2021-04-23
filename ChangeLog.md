@@ -1,3 +1,7 @@
+## 0.2.0.1
+
+* Make connection finalizer thread safe (#28).
+
 ## 0.2
 
 * Remove obsolete `fieldDefault` from `data Field` (#41).
