@@ -28,6 +28,9 @@ module Database.MySQL.Base.Types
     , MYSQL_ROW
     , MYSQL_ROWS
     , MYSQL_ROW_OFFSET
+    , MYSQL_STMT
+    , MYSQL_BIND(..)
+    , MYSQL_TIME(..)
     , MyBool
     -- * Field flags
     , hasAllFlags
@@ -60,10 +63,12 @@ import Data.Word (Word, Word8)
 import Foreign.C.Types (CChar, CInt, CUInt, CULong)
 import Foreign.Ptr (Ptr)
 import Foreign.Storable (Storable(..), peekByteOff)
+import qualified Foreign  as Foreign
 import qualified Data.IntMap as IntMap
 
 data MYSQL
 data MYSQL_RES
+data MYSQL_STMT
 data MYSQL_ROWS
 type MYSQL_ROW = Ptr (Ptr CChar)
 type MYSQL_ROW_OFFSET = Ptr MYSQL_ROWS
@@ -100,6 +105,38 @@ data Type = Decimal
           | Json
             deriving (Enum, Eq, Show, Typeable)
 
+fromType :: Type -> CInt
+fromType t =
+    case t of
+      Decimal -> #const MYSQL_TYPE_DECIMAL
+      Tiny -> #const MYSQL_TYPE_TINY
+      Short -> #const MYSQL_TYPE_SHORT
+      Int24 ->  #const MYSQL_TYPE_INT24
+      Long ->  #const MYSQL_TYPE_LONG
+      Float ->  #const MYSQL_TYPE_FLOAT
+      Double ->  #const MYSQL_TYPE_DOUBLE
+      Null ->  #const MYSQL_TYPE_NULL
+      Timestamp -> #const MYSQL_TYPE_TIMESTAMP
+      LongLong -> #const MYSQL_TYPE_LONGLONG
+      Date -> #const MYSQL_TYPE_DATE
+      Time -> #const MYSQL_TYPE_TIME
+      DateTime -> #const MYSQL_TYPE_DATETIME 
+      Year -> #const MYSQL_TYPE_YEAR
+      NewDate -> #const MYSQL_TYPE_NEWDATE
+      VarChar -> #const MYSQL_TYPE_VARCHAR
+      Bit -> #const MYSQL_TYPE_BIT
+      NewDecimal -> #const MYSQL_TYPE_NEWDECIMAL
+      Enum -> #const MYSQL_TYPE_ENUM
+      Set -> #const MYSQL_TYPE_SET
+      TinyBlob -> #const MYSQL_TYPE_TINY_BLOB
+      MediumBlob -> #const MYSQL_TYPE_MEDIUM_BLOB
+      LongBlob -> #const MYSQL_TYPE_LONG_BLOB
+      Blob -> #const MYSQL_TYPE_BLOB
+      VarString -> #const MYSQL_TYPE_VAR_STRING
+      String -> #const MYSQL_TYPE_STRING
+      Geometry -> #const MYSQL_TYPE_GEOMETRY
+      Json -> #const MYSQL_TYPE_JSON
+
 toType :: CInt -> Type
 toType v = IntMap.findWithDefault oops (fromIntegral v) typeMap
   where
@@ -132,10 +169,73 @@ toType v = IntMap.findWithDefault oops (fromIntegral v) typeMap
       , ((#const MYSQL_TYPE_VAR_STRING), VarString)
       , ((#const MYSQL_TYPE_STRING), String)
       , ((#const MYSQL_TYPE_GEOMETRY), Geometry)
-#if defined(MYSQL_TYPE_JSON)
       , ((#const MYSQL_TYPE_JSON), Json)
-#endif
       ]
+
+data MYSQL_BIND = MYSQL_BIND
+    { mysqlBindBufferType :: Type
+    , mysqlBindBuffer :: Ptr ()
+    , mysqlBindBufferLength :: CULong
+    , mysqlBindLength :: Ptr CULong
+    , mysqlBindIsNull :: Ptr MyBool
+    , mysqlBindIsUnsigned :: MyBool
+    , mysqlBindError :: Ptr MyBool
+    }
+
+instance Storable MYSQL_BIND where
+    sizeOf _    = #{size MYSQL_BIND}
+    alignment _ = #{alignment MYSQL_BIND} 
+    peek ptr =
+        MYSQL_BIND
+            <$> (toType <$> (#peek MYSQL_BIND, buffer_type) ptr)
+            <*> (#peek MYSQL_BIND, buffer) ptr
+            <*> (#peek MYSQL_BIND, buffer_length) ptr
+            <*> (#peek MYSQL_BIND, length) ptr
+            <*> (#peek MYSQL_BIND, is_null) ptr
+            <*> (#peek MYSQL_BIND, is_unsigned) ptr
+            <*> (#peek MYSQL_BIND, error) ptr
+    poke ptr val = do
+       (#poke MYSQL_BIND, buffer_type) ptr $ fromType $ mysqlBindBufferType val
+       (#poke MYSQL_BIND, buffer) ptr $ mysqlBindBuffer val
+       (#poke MYSQL_BIND, buffer_length) ptr $ mysqlBindBufferLength val
+       (#poke MYSQL_BIND, length) ptr $ mysqlBindLength val
+       (#poke MYSQL_BIND, is_null) ptr $ mysqlBindIsNull val 
+       (#poke MYSQL_BIND, is_unsigned) ptr $ mysqlBindIsUnsigned val 
+       (#poke MYSQL_BIND, error) ptr $ mysqlBindError val 
+
+data MYSQL_TIME = MYSQL_TIME
+    { mysqlTimeYear :: CUInt 
+    , mysqlTimeMonth :: CUInt 
+    , mysqlTimeDay :: CUInt 
+    , mysqlTimeHour :: CUInt 
+    , mysqlTimeMinute :: CUInt 
+    , mysqlTimeSecond :: CUInt 
+    , mysqlTimeNeg :: Bool
+    , mysqlTimeSecondPart :: CULong 
+    }
+
+instance Storable MYSQL_TIME where
+    sizeOf _    = #{size MYSQL_TIME}
+    alignment _ = #{alignment MYSQL_TIME} 
+    peek ptr =
+        MYSQL_TIME
+            <$> (#peek MYSQL_TIME, year) ptr
+            <*> (#peek MYSQL_TIME, month) ptr
+            <*> (#peek MYSQL_TIME, day) ptr
+            <*> (#peek MYSQL_TIME, hour) ptr
+            <*> (#peek MYSQL_TIME, minute) ptr
+            <*> (#peek MYSQL_TIME, second) ptr
+            <*> (Foreign.toBool <$> ((#peek MYSQL_TIME, neg) ptr :: IO MyBool))
+            <*> (#peek MYSQL_TIME, second_part) ptr
+    poke ptr val = do
+       (#poke MYSQL_TIME, year) ptr $ mysqlTimeYear val
+       (#poke MYSQL_TIME, month) ptr $ mysqlTimeMonth val
+       (#poke MYSQL_TIME, day) ptr $ mysqlTimeDay val
+       (#poke MYSQL_TIME, hour) ptr $ mysqlTimeHour val
+       (#poke MYSQL_TIME, minute) ptr $ mysqlTimeMinute val 
+       (#poke MYSQL_TIME, second) ptr $ mysqlTimeSecond val 
+       (#poke MYSQL_TIME, neg) ptr $ ((Foreign.fromBool $ mysqlTimeNeg val) :: MyBool)
+       (#poke MYSQL_TIME, second_part) ptr $ mysqlTimeSecondPart val 
 
 -- | A description of a field (column) of a table.
 data Field = Field {
@@ -232,7 +332,7 @@ peekField ptr = do
 
 instance Storable Field where
     sizeOf _    = #{size MYSQL_FIELD}
-    alignment _ = alignment (undefined :: Ptr CChar)
+    alignment _ = #{alignment MYSQL_FIELD}
     peek = peekField
     poke _ _ = return ()   -- Unused, but define it to avoid a warning
 

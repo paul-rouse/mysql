@@ -48,6 +48,7 @@ module Database.MySQL.Base.C
     -- * Working with results
     , mysql_free_result
     , mysql_free_result_nonblock
+    , mysql_num_fields
     , mysql_fetch_fields
     , mysql_fetch_fields_nonblock
     , mysql_data_seek
@@ -68,6 +69,19 @@ module Database.MySQL.Base.C
     , mysql_library_init
     , mysql_thread_init
     , mysql_thread_end
+
+
+    , mysql_stmt_init
+    , mysql_stmt_close
+    , mysql_stmt_prepare
+    , mysql_stmt_bind_param
+    , mysql_stmt_bind_result
+    , mysql_stmt_execute
+    , mysql_stmt_fetch
+    , mysql_stmt_store_result
+    , mysql_stmt_result_metadata
+    , mysql_stmt_free_result
+    , mysql_stmt_error
     ) where
 
 #include "mysql_signals.h"
@@ -242,6 +256,9 @@ foreign import ccall safe "mysql_signals.h _hs_mysql_free_result" mysql_free_res
 foreign import ccall safe "mysql.h mysql_free_result" mysql_free_result_nonblock
     :: Ptr MYSQL_RES -> IO ()
 
+foreign import ccall safe mysql_num_fields
+    :: Ptr MYSQL_RES -> IO CUInt
+
 foreign import ccall safe mysql_fetch_fields
     :: Ptr MYSQL_RES -> IO (Ptr Field)
 
@@ -299,3 +316,50 @@ foreign import ccall safe "mysql.h" mysql_thread_init
 
 foreign import ccall safe "mysql.h" mysql_thread_end
     :: IO ()
+
+
+-- Prepared Statements
+foreign import ccall safe mysql_stmt_init
+    :: Ptr MYSQL -> IO (Ptr MYSQL_STMT)
+
+foreign import ccall safe mysql_stmt_close
+    :: Ptr MYSQL_STMT -> IO MyBool
+
+foreign import ccall safe mysql_stmt_bind_param
+    :: Ptr MYSQL_STMT -> Ptr MYSQL_BIND -> IO MyBool
+
+foreign import ccall safe mysql_stmt_bind_result
+    :: Ptr MYSQL_STMT -> Ptr MYSQL_BIND -> IO MyBool
+
+foreign import ccall safe mysql_stmt_errno
+    :: Ptr MYSQL_STMT -> IO CInt
+
+foreign import ccall safe mysql_stmt_error
+    :: Ptr MYSQL_STMT -> IO CString
+
+foreign import ccall safe mysql_stmt_prepare
+    :: Ptr MYSQL_STMT -> CString -> CULong -> IO CInt
+
+foreign import ccall safe mysql_stmt_execute
+    :: Ptr MYSQL_STMT -> IO CInt
+
+foreign import ccall safe mysql_stmt_fetch
+    :: Ptr MYSQL_STMT -> IO CInt
+
+foreign import ccall safe mysql_stmt_store_result
+    :: Ptr MYSQL_STMT -> IO CInt
+
+foreign import ccall safe mysql_stmt_insert_id
+    :: Ptr MYSQL_STMT -> IO CULLong
+
+foreign import ccall safe mysql_stmt_field_count
+    :: Ptr MYSQL_STMT -> IO CUInt
+
+foreign import ccall safe mysql_stmt_affected_rows
+    :: Ptr MYSQL_STMT -> IO CULLong
+
+foreign import ccall safe mysql_stmt_result_metadata
+    :: Ptr MYSQL_STMT -> IO (Ptr MYSQL_RES) 
+
+foreign import ccall safe mysql_stmt_free_result
+    :: Ptr MYSQL_STMT -> IO MyBool
