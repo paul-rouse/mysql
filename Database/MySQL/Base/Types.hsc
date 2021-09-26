@@ -132,9 +132,7 @@ toType v = IntMap.findWithDefault oops (fromIntegral v) typeMap
       , ((#const MYSQL_TYPE_VAR_STRING), VarString)
       , ((#const MYSQL_TYPE_STRING), String)
       , ((#const MYSQL_TYPE_GEOMETRY), Geometry)
-#if defined(MYSQL_TYPE_JSON)
-      , ((#const MYSQL_TYPE_JSON), Json)
-#endif
+      , (245, Json)
       ]
 
 -- | A description of a field (column) of a table.
