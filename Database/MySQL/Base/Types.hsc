@@ -74,6 +74,15 @@ type MYSQL_ROW = Ptr (Ptr CChar)
 type MYSQL_ROW_OFFSET = Ptr MYSQL_ROWS
 type MyBool = CChar
 
+-- "mysql.h" defines the `MYSQL_TYPE_...` symbols as values of an enumeration,
+-- not as preprocessor symbols.  Therefore we can't test for the presence of
+-- `MYSQL_TYPE_JSON` using `#ifdef` or `#if defined()`, yet it is not available
+-- in all versions of MySQL and MariaDB.  Although this is very unsatisfactory,
+-- we have little alternative but to define it here.
+--
+mysql_type_json :: Int
+mysql_type_json = 245
+
 -- | Column types supported by MySQL.
 data Type = Decimal
           | Tiny
@@ -135,8 +144,9 @@ fromType t =
       VarString -> #const MYSQL_TYPE_VAR_STRING
       String -> #const MYSQL_TYPE_STRING
       Geometry -> #const MYSQL_TYPE_GEOMETRY
-      Json -> #const MYSQL_TYPE_JSON
-
+      Json -> mysql_type_json
+      
+      
 toType :: CInt -> Type
 toType v = IntMap.findWithDefault oops (fromIntegral v) typeMap
   where
@@ -169,7 +179,7 @@ toType v = IntMap.findWithDefault oops (fromIntegral v) typeMap
       , ((#const MYSQL_TYPE_VAR_STRING), VarString)
       , ((#const MYSQL_TYPE_STRING), String)
       , ((#const MYSQL_TYPE_GEOMETRY), Geometry)
-      , ((#const MYSQL_TYPE_JSON), Json)
+      , (mysql_type_json, Json)
       ]
 
 data MYSQL_BIND = MYSQL_BIND
