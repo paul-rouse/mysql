@@ -1,3 +1,7 @@
+## 0.2.1
+
+* Work around incorrect test for header-file definition of MYSQL_TYPE_JSON (#45 and 51464fa)
+
 ## 0.2.0.1
 
 * Make connection finalizer thread safe (#28).
