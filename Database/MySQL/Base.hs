@@ -82,6 +82,10 @@ module Database.MySQL.Base
     , initLibrary
     , initThread
     , endThread
+    -- * Prepared Statements
+    , prepare
+    , Statement.bindParams
+    , Statement.execute
     ) where
 
 import Control.Applicative ((<$>), (<*>))
@@ -96,6 +100,8 @@ import Data.Int (Int64)
 import Data.List (foldl')
 import Data.Typeable (Typeable)
 import Data.Word (Word, Word16, Word64)
+import Data.Text (Text)
+import qualified Database.MySQL.PreparedStatement as Statement
 import Database.MySQL.Base.C
 import Database.MySQL.Base.Types
 import Foreign.C.String (CString, peekCString, withCString)
@@ -648,3 +654,7 @@ connectionError_ func ptr =do
   errno <- mysql_errno ptr
   msg <- peekCString =<< mysql_error ptr
   throw $ ConnectionError func (fromIntegral errno) msg
+
+prepare :: Connection -> Text -> IO Statement.Statement
+prepare conn q = do
+    Statement.prepare (connFP conn) q

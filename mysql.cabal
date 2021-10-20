@@ -44,12 +44,15 @@ library
 
   exposed-modules:
     Database.MySQL.Base
+    Database.MySQL.PreparedStatement
     Database.MySQL.Base.C
     Database.MySQL.Base.Types
 
   build-depends:
     base       < 5,
     bytestring >= 0.9 && < 1.0,
+    text,
+    time,
     containers
   if !impl(ghc >= 8.0)
     build-depends:
@@ -73,6 +76,7 @@ test-suite test
     build-depends:   base                    >= 4 && < 5
                    , bytestring
                    , hspec
+                   , time
                    , mysql
 
 source-repository head
