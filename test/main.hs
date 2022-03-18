@@ -21,6 +21,7 @@ testConn :: Bool -> ConnectInfo
 testConn ci = defaultConnectInfo {
                 connectHost     = "127.0.0.1"
               , connectUser     = "test"
+              , connectPassword = "test"
               , connectDatabase = "test"
               , connectPort     = if ci then 33306 else 3306
               , connectOptions  = [
