@@ -1,0 +1,6 @@
+resolver: lts-18.28
+packages: 
+- .
+extra-deps: []
+system-ghc: true
+compiler-check: newer-minor
