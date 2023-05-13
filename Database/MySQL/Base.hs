@@ -405,7 +405,7 @@ query conn q = withConn conn $ \ptr ->
 -- | Return the value generated for an @AUTO_INCREMENT@ column by the
 -- previous @INSERT@ or @UPDATE@ statement.
 --
--- See <http://dev.mysql.com/doc/refman/5.5/en/mysql-insert-id.html>
+-- See <https://dev.mysql.com/doc/c-api/8.0/en/mysql-insert-id.html>
 insertID :: Connection -> IO Word64
 insertID conn = fromIntegral <$> (withConn conn $ mysql_insert_id)
 
